@@ -8,6 +8,7 @@ import { createRequestId, getRequestId } from "../src/lib/request-id.ts";
 import { DevelopmentRateLimiter } from "../src/lib/rate-limit.ts";
 import { normalizeInput, validateYouTubeUrl } from "../src/lib/security.ts";
 import { formatTranscriptForCopy } from "../src/lib/transcript-copy.ts";
+import { countMatches, getVisibleSegments } from "../src/lib/transcript-search.ts";
 
 test("request IDs accept safe incoming IDs and reject malformed values", () => {
   const request = new Request("http://localhost/api/health", {
@@ -76,6 +77,18 @@ test("provider registry stays empty until a real provider is supplied", () => {
   const registry = new ProviderRegistry();
   assert.equal(registry.list().length, 0);
   assert.equal(registry.get("supadata"), undefined);
+});
+
+test("transcript search helper respects case-insensitive Unicode text matching", () => {
+  const segments = [
+    { text: "Hello ሰላም from the studio" },
+    { text: "Second line with focus" },
+    { text: "A final line" },
+  ];
+  assert.equal(countMatches(segments, "HELLO"), 1);
+  assert.equal(countMatches(segments, "ሰላም"), 1);
+  assert.equal(getVisibleSegments(segments, "line").length, 2);
+  assert.equal(getVisibleSegments(segments, "studio")[0].text, "Hello ሰላም from the studio");
 });
 
 test("development limiter reports remaining capacity and retry information", async () => {

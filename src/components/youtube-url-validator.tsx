@@ -16,6 +16,19 @@ type JobData = {
   error?: { message: string };
 };
 
+function getPipelineState({ loading, job, error }: { loading: boolean; job: JobData | null; error: string }) {
+  if (error && !job) return "idle";
+  if (loading && !job) return "validating";
+  if (job?.status === "queued") return "queued";
+  if (job?.status === "processing") return "processing";
+  if (job?.status === "retrying") return "retrying";
+  if (job?.status === "completed") return "completed";
+  if (job?.status === "failed") return "failed";
+  if (job?.status === "cancelled") return "failed";
+  if (loading && job) return "creating";
+  return "ready";
+}
+
 function timestamp(milliseconds?: number) {
   if (milliseconds === undefined) return "";
   const totalSeconds = Math.floor(milliseconds / 1000);
@@ -26,6 +39,12 @@ function statusLabel(status: JobData["status"]) {
   return status === "queued" ? "Queued" : status === "processing" ? "Processing transcript" : status === "retrying" ? "Retrying" : status === "completed" ? "Transcript ready" : status === "cancelled" ? "Cancelled" : "Transcript unavailable";
 }
 
+const languageOptions = [
+  { value: "", label: "Auto / provider default" },
+  { value: "am", label: "Amharic (am)" },
+  { value: "en", label: "English (en)" },
+] as const;
+
 export function YouTubeUrlValidator() {
   const [url, setUrl] = useState("");
   const [language, setLanguage] = useState("");
@@ -35,6 +54,7 @@ export function YouTubeUrlValidator() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const pollRun = useRef(0);
+  const pipelineState = getPipelineState({ loading, job, error });
 
   async function pollJob(id: string, token: string, run: number) {
     setLoading(true);
@@ -78,13 +98,18 @@ export function YouTubeUrlValidator() {
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const trimmedUrl = url.trim();
+    if (!trimmedUrl) {
+      setError("Paste a valid YouTube URL to continue.");
+      return;
+    }
     const run = ++pollRun.current;
     setLoading(true);
     setError("");
     setData(null);
     setTranscript(null);
     try {
-      const response = await fetch("/api/transcripts", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ url, ...(language ? { language } : {}) }) });
+      const response = await fetch("/api/transcripts", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ url: trimmedUrl, ...(language ? { language } : {}) }) });
       const payload = await response.json() as { success: boolean; data?: { job: JobData; accessToken: string }; error?: { message?: string } };
       if (!response.ok || !payload.success || !payload.data) {
         setError(payload.error?.message || "The transcript job could not be created.");
@@ -98,6 +123,18 @@ export function YouTubeUrlValidator() {
       if (run === pollRun.current) setError("Transcript job creation is temporarily unavailable.");
     } finally {
       if (run === pollRun.current) setLoading(false);
+    }
+  }
+
+  async function pasteFromClipboard() {
+    try {
+      if (!navigator.clipboard?.readText) {
+        throw new Error("Clipboard not available.");
+      }
+      const clipboardText = await navigator.clipboard.readText();
+      setUrl(clipboardText.trim());
+    } catch {
+      setError("Clipboard access is unavailable. Paste the URL manually.");
     }
   }
 
@@ -117,18 +154,26 @@ export function YouTubeUrlValidator() {
   return (
     <div className="validator" aria-live="polite">
       <p className="panel-kicker">Transcript workspace</p>
+      <div className="status-row" aria-live="polite">
+        <span className="status-chip">{pipelineState.toUpperCase()}</span>
+      </div>
       <h2>Bring a YouTube video into focus.</h2>
       <p className="validator-copy">Sonnetra validates the source, creates a durable job, and retrieves a real transcript through the configured provider.</p>
       <form onSubmit={submit}>
         <label htmlFor="youtube-url">YouTube URL</label>
         <div className="validator-controls">
           <input id="youtube-url" name="url" type="url" value={url} onChange={(event) => setUrl(event.target.value)} placeholder="https://www.youtube.com/watch?v=..." autoComplete="url" required />
-          <button type="submit" disabled={loading}>{loading ? "Working..." : "Get transcript"}</button>
+          <button type="button" className="secondary-action" onClick={pasteFromClipboard} disabled={loading}>Paste</button>
+          <button type="submit" disabled={loading}>{loading ? "Working..." : "Get Transcript"}</button>
         </div>
       </form>
       <div className="language-control">
         <label htmlFor="transcript-language">Language (optional)</label>
-        <input id="transcript-language" value={language} onChange={(event) => setLanguage(event.target.value)} placeholder="am" inputMode="text" />
+        <select id="transcript-language" value={language} onChange={(event) => setLanguage(event.target.value)}>
+          {languageOptions.map((option) => (
+            <option key={option.value || "auto"} value={option.value}>{option.label}</option>
+          ))}
+        </select>
       </div>
       {error && <p className="validator-error" role="alert">{error}</p>}
       {job && <p className="job-status" aria-live="polite">{statusLabel(job.status)}</p>}

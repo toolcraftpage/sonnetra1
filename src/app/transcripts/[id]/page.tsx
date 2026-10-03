@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { TranscriptCopyButton } from "@/components/transcript-copy-button";
-import { formatTranscriptForCopy } from "@/lib/transcript-copy";
+import { TranscriptReader } from "@/components/transcript-reader";
 import { createAuthenticatedSupabaseClient } from "@/lib/supabase/server";
 import { isValidUuid, userOwnsRecord } from "@/lib/auth";
 
@@ -26,18 +25,6 @@ type TranscriptSegment = {
   start_ms: number | null;
   end_ms: number | null;
 };
-
-function formatTimestamp(milliseconds: number): string {
-  const totalSeconds = Math.floor(milliseconds / 1000);
-  const hours = Math.floor(totalSeconds / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-  const seconds = totalSeconds % 60;
-  const paddedSeconds = String(seconds).padStart(2, "0");
-
-  return hours > 0
-    ? `${hours}:${String(minutes).padStart(2, "0")}:${paddedSeconds}`
-    : `${minutes}:${paddedSeconds}`;
-}
 
 export default async function TranscriptDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -101,21 +88,11 @@ export default async function TranscriptDetailPage({ params }: { params: Promise
           <div><dt>Provider</dt><dd>{transcript.provider}</dd></div>
           <div><dt>Created</dt><dd>{new Date(transcript.created_at).toLocaleString()}</dd></div>
         </dl>
-        <TranscriptCopyButton text={formatTranscriptForCopy(transcript.full_text, segments)} />
       </div>
 
       <div className="dashboard-card">
         <h2>Transcript</h2>
-        <div className="transcript-viewer">
-          {(segments.length > 0 ? segments : []).map((segment) => (
-            <div key={`${transcript.id}-${segment.sequence_number}`} className="transcript-segment">
-              {typeof segment.start_ms === "number" ? <span className="timestamp">{formatTimestamp(segment.start_ms)}</span> : null}
-              <p>{segment.text}</p>
-            </div>
-          ))}
-          {!transcript.full_text && segments.length === 0 ? <p className="empty-state">No transcript text is available yet.</p> : null}
-          {transcript.full_text && segments.length === 0 ? <p>{transcript.full_text}</p> : null}
-        </div>
+        <TranscriptReader transcript={transcript} segments={segments} />
       </div>
     </div>
   );
