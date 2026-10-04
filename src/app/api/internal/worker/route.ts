@@ -7,12 +7,23 @@ import { getRequestId } from "@/lib/request-id";
 import { TranscriptJobWorker } from "@/server/transcript-jobs";
 
 export function isAuthorized(request: Request): boolean {
-  const configured = getServerConfig().workerSecret;
-  const supplied = request.headers.get("x-worker-secret");
-  if (!configured || !supplied) return false;
-  const expected = Buffer.from(configured);
-  const actual = Buffer.from(supplied);
-  return expected.length === actual.length && timingSafeEqual(expected, actual);
+  const configuredSecrets = [
+    getServerConfig().workerSecret,
+    process.env.CRON_SECRET?.trim(),
+  ].filter((value): value is string => Boolean(value));
+
+  const suppliedDirect = request.headers.get("x-worker-secret");
+  const authorization = request.headers.get("authorization") ?? "";
+  const suppliedBearer = authorization.startsWith("Bearer ") ? authorization.slice("Bearer ".length).trim() : undefined;
+  const suppliedValues = [suppliedDirect, suppliedBearer].filter((value): value is string => Boolean(value));
+
+  if (configuredSecrets.length === 0 || suppliedValues.length === 0) return false;
+
+  return suppliedValues.some((supplied) => configuredSecrets.some((configured) => {
+    const expected = Buffer.from(configured);
+    const actual = Buffer.from(supplied);
+    return expected.length === actual.length && timingSafeEqual(expected, actual);
+  }));
 }
 
 async function parseExactJobId(request: Request): Promise<string | undefined> {

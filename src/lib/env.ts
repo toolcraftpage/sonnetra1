@@ -35,6 +35,7 @@ const rules: EnvironmentRule[] = [
   { name: "SUPABASE_SERVICE_ROLE_KEY", visibility: "SERVER_ONLY" },
   { name: "SUPADATA_API_KEY", visibility: "SERVER_ONLY" },
   { name: "WORKER_SECRET", visibility: "SERVER_ONLY" },
+  { name: "CRON_SECRET", visibility: "SERVER_ONLY" },
   { name: "AI_PROVIDER_API_KEY", visibility: "SERVER_ONLY" },
   { name: "PAYMENT_PROVIDER_SECRET_KEY", visibility: "SERVER_ONLY" },
 ];
@@ -47,6 +48,7 @@ export const phase17EnvironmentNames = [
   "SUPABASE_SERVICE_ROLE_KEY",
   "SUPADATA_API_KEY",
   "WORKER_SECRET",
+  "CRON_SECRET",
   "NEXT_PUBLIC_APP_URL",
 ] as const;
 

@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { errorResponse, successResponse } from "../src/lib/api-response.ts";
 import { ERROR_CODES } from "../src/lib/constants.ts";
+import { readFileSync } from "node:fs";
 import { AppError, serializeError } from "../src/lib/errors.ts";
 import { ProviderRegistry, } from "../src/lib/providers/transcript.ts";
 import { createRequestId, getRequestId } from "../src/lib/request-id.ts";
@@ -39,6 +40,14 @@ test("errors serialize into a stable redacted API contract", async () => {
   assert.equal(response.status, 503);
   assert.equal(response.headers.get("x-request-id"), "request-123");
   assert.equal((await response.json()).error.requestId, "request-123");
+});
+
+test("worker authorization accepts both direct secret headers and Vercel cron bearer tokens", () => {
+  const routeSource = readFileSync(new URL("../src/app/api/internal/worker/route.ts", import.meta.url), "utf8");
+
+  assert.match(routeSource, /x-worker-secret/i);
+  assert.match(routeSource, /authorization/i);
+  assert.match(routeSource, /CRON_SECRET|WORKER_SECRET/i);
 });
 
 test("provider and transcript failures map to stable HTTP statuses", () => {
