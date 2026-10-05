@@ -44,10 +44,14 @@ test("errors serialize into a stable redacted API contract", async () => {
 
 test("worker authorization accepts both direct secret headers and Vercel cron bearer tokens", () => {
   const routeSource = readFileSync(new URL("../src/app/api/internal/worker/route.ts", import.meta.url), "utf8");
+  const serverConfig = readFileSync(new URL("../src/lib/config/server.ts", import.meta.url), "utf8");
+  const vercelConfig = readFileSync(new URL("../vercel.json", import.meta.url), "utf8");
 
   assert.match(routeSource, /x-worker-secret/i);
   assert.match(routeSource, /authorization/i);
-  assert.match(routeSource, /CRON_SECRET|WORKER_SECRET/i);
+  assert.match(serverConfig, /CRON_SECRET/);
+  assert.match(routeSource, /export async function GET/);
+  assert.match(vercelConfig, /"path"\s*:\s*"\/api\/internal\/worker"/);
 });
 
 test("provider and transcript failures map to stable HTTP statuses", () => {

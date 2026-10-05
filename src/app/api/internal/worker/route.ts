@@ -9,7 +9,7 @@ import { TranscriptJobWorker } from "@/server/transcript-jobs";
 export function isAuthorized(request: Request): boolean {
   const configuredSecrets = [
     getServerConfig().workerSecret,
-    process.env.CRON_SECRET?.trim(),
+    getServerConfig().cronSecret,
   ].filter((value): value is string => Boolean(value));
 
   const suppliedDirect = request.headers.get("x-worker-secret");
@@ -50,11 +50,11 @@ async function parseExactJobId(request: Request): Promise<string | undefined> {
   return jobId;
 }
 
-export async function POST(request: Request) {
+async function handleWorkerRequest(request: Request, allowExactJob: boolean) {
   const requestId = getRequestId(request);
   try {
     if (!isAuthorized(request)) throw new AppError("AUTHORIZATION_ERROR", "Worker authorization failed.", { statusCode: 403 });
-    const jobId = await parseExactJobId(request);
+    const jobId = allowExactJob ? await parseExactJobId(request) : undefined;
     if (jobId && !/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(jobId)) {
       throw new AppError("VALIDATION_ERROR", "jobId must be a valid UUID.", { statusCode: 400 });
     }
@@ -65,4 +65,12 @@ export async function POST(request: Request) {
   } catch (error) {
     return errorResponse(error, requestId);
   }
+}
+
+export async function GET(request: Request) {
+  return handleWorkerRequest(request, false);
+}
+
+export async function POST(request: Request) {
+  return handleWorkerRequest(request, true);
 }

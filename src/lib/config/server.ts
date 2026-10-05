@@ -30,5 +30,6 @@ export function getServerConfig(
     supabaseServiceRoleKey: environment.SUPABASE_SERVICE_ROLE_KEY?.trim(),
     supadataApiKey: getSupadataConfiguration(environment).apiKey,
     workerSecret: environment.WORKER_SECRET?.trim(),
+    cronSecret: environment.CRON_SECRET?.trim(),
   };
 }
