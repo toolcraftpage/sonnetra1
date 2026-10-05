@@ -1,35 +1,14 @@
-import { timingSafeEqual } from "node:crypto";
 import { errorResponse, successResponse } from "@/lib/api-response";
 import { AppError } from "@/lib/errors";
 import { getServerConfig } from "@/lib/config/server";
 import { createProviderRegistry, requireProvider } from "@/lib/providers";
 import { getRequestId } from "@/lib/request-id";
 import { TranscriptJobWorker } from "@/server/transcript-jobs";
+import { isWorkerRequestAuthorized, type WorkerAuthMode } from "@/server/worker-auth";
 
-function compareSecret(supplied: string | undefined, expected: string | undefined): boolean {
-  if (!supplied || !expected) return false;
-
-  const expectedBuffer = Buffer.from(expected);
-  const suppliedBuffer = Buffer.from(supplied);
-  return expectedBuffer.length === suppliedBuffer.length && timingSafeEqual(expectedBuffer, suppliedBuffer);
-}
-
-export function isAuthorized(request: Request, mode: "cron" | "worker" = "worker"): boolean {
+function isAuthorized(request: Request, mode: WorkerAuthMode): boolean {
   const { cronSecret, workerSecret } = getServerConfig();
-  const expectedSecret = mode === "cron" ? cronSecret : workerSecret;
-
-  if (!expectedSecret) return false;
-
-  if (mode === "cron") {
-    const authorization = request.headers.get("authorization") ?? "";
-    const suppliedBearer = authorization.startsWith("Bearer ") ? authorization.slice("Bearer ".length).trim() : undefined;
-    return compareSecret(suppliedBearer, expectedSecret);
-  }
-
-  const suppliedDirect = request.headers.get("x-worker-secret") ?? undefined;
-  const authorization = request.headers.get("authorization") ?? "";
-  const suppliedBearer = authorization.startsWith("Bearer ") ? authorization.slice("Bearer ".length).trim() : undefined;
-  return compareSecret(suppliedDirect, expectedSecret) || compareSecret(suppliedBearer, expectedSecret);
+  return isWorkerRequestAuthorized(request, mode, { cronSecret, workerSecret });
 }
 
 async function parseExactJobId(request: Request): Promise<string | undefined> {

@@ -10,6 +10,7 @@ import { DevelopmentRateLimiter } from "../src/lib/rate-limit.ts";
 import { normalizeInput, validateYouTubeUrl } from "../src/lib/security.ts";
 import { formatTranscriptForCopy } from "../src/lib/transcript-copy.ts";
 import { countMatches, getVisibleSegments } from "../src/lib/transcript-search.ts";
+import { isWorkerRequestAuthorized } from "../src/server/worker-auth.ts";
 
 test("request IDs accept safe incoming IDs and reject malformed values", () => {
   const request = new Request("http://localhost/api/health", {
@@ -54,13 +55,34 @@ test("worker authorization accepts both direct secret headers and Vercel cron be
   assert.match(vercelConfig, /"path"\s*:\s*"\/api\/internal\/worker"/);
 });
 
-test("cron GET authorization is separate from worker POST authorization", () => {
+test("cron GET authorization only accepts CRON_SECRET bearer tokens", () => {
+  const secrets = { cronSecret: "test-cron-secret", workerSecret: "test-worker-secret" };
+  const request = (headers = {}) => new Request("https://sonnetra.vercel.app/api/internal/worker", { headers });
+
+  assert.equal(isWorkerRequestAuthorized(request(), "cron", secrets), false);
+  assert.equal(isWorkerRequestAuthorized(request({ authorization: "Bearer wrong-secret" }), "cron", secrets), false);
+  assert.equal(isWorkerRequestAuthorized(request({ authorization: "Bearer test-worker-secret" }), "cron", secrets), false);
+  assert.equal(isWorkerRequestAuthorized(request({ "x-worker-secret": "test-cron-secret" }), "cron", secrets), false);
+  assert.equal(isWorkerRequestAuthorized(request({ authorization: "Bearer test-cron-secret" }), "cron", secrets), true);
+});
+
+test("protected POST authorization only accepts WORKER_SECRET", () => {
+  const secrets = { cronSecret: "test-cron-secret", workerSecret: "test-worker-secret" };
+  const request = (headers = {}) => new Request("https://sonnetra.vercel.app/api/internal/worker", { headers });
+
+  assert.equal(isWorkerRequestAuthorized(request(), "worker", secrets), false);
+  assert.equal(isWorkerRequestAuthorized(request({ "x-worker-secret": "wrong-secret" }), "worker", secrets), false);
+  assert.equal(isWorkerRequestAuthorized(request({ authorization: "Bearer test-cron-secret" }), "worker", secrets), false);
+  assert.equal(isWorkerRequestAuthorized(request({ "x-worker-secret": "test-worker-secret" }), "worker", secrets), true);
+  assert.equal(isWorkerRequestAuthorized(request({ authorization: "Bearer test-worker-secret" }), "worker", secrets), true);
+});
+
+test("worker route maps GET to cron auth and POST to worker auth", () => {
   const routeSource = readFileSync(new URL("../src/app/api/internal/worker/route.ts", import.meta.url), "utf8");
 
+  assert.match(routeSource, /handleWorkerRequest\(request, false\)/);
+  assert.match(routeSource, /handleWorkerRequest\(request, true\)/);
   assert.match(routeSource, /allowExactJob\s*\?\s*"worker"\s*:\s*"cron"/i);
-  assert.match(routeSource, /mode\s*===\s*"cron"|mode\s*===\s*"worker"/i);
-  assert.match(routeSource, /cronSecret|workerSecret/i);
-  assert.doesNotMatch(routeSource, /configuredSecrets\s*=\s*\[\s*getServerConfig\(\)\.workerSecret,\s*getServerConfig\(\)\.cronSecret\s*\]/i);
 });
 
 test("provider and transcript failures map to stable HTTP statuses", () => {
