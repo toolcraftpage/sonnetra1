@@ -54,6 +54,15 @@ test("worker authorization accepts both direct secret headers and Vercel cron be
   assert.match(vercelConfig, /"path"\s*:\s*"\/api\/internal\/worker"/);
 });
 
+test("cron GET authorization is separate from worker POST authorization", () => {
+  const routeSource = readFileSync(new URL("../src/app/api/internal/worker/route.ts", import.meta.url), "utf8");
+
+  assert.match(routeSource, /allowExactJob\s*\?\s*"worker"\s*:\s*"cron"/i);
+  assert.match(routeSource, /mode\s*===\s*"cron"|mode\s*===\s*"worker"/i);
+  assert.match(routeSource, /cronSecret|workerSecret/i);
+  assert.doesNotMatch(routeSource, /configuredSecrets\s*=\s*\[\s*getServerConfig\(\)\.workerSecret,\s*getServerConfig\(\)\.cronSecret\s*\]/i);
+});
+
 test("provider and transcript failures map to stable HTTP statuses", () => {
   assert.equal(new AppError(ERROR_CODES.RATE_LIMITED, "Limited.").statusCode, 429);
   assert.equal(new AppError(ERROR_CODES.PROVIDER_TIMEOUT, "Timed out.").statusCode, 504);

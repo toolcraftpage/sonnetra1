@@ -6,24 +6,30 @@ import { createProviderRegistry, requireProvider } from "@/lib/providers";
 import { getRequestId } from "@/lib/request-id";
 import { TranscriptJobWorker } from "@/server/transcript-jobs";
 
-export function isAuthorized(request: Request): boolean {
-  const configuredSecrets = [
-    getServerConfig().workerSecret,
-    getServerConfig().cronSecret,
-  ].filter((value): value is string => Boolean(value));
+function compareSecret(supplied: string | undefined, expected: string | undefined): boolean {
+  if (!supplied || !expected) return false;
 
-  const suppliedDirect = request.headers.get("x-worker-secret");
+  const expectedBuffer = Buffer.from(expected);
+  const suppliedBuffer = Buffer.from(supplied);
+  return expectedBuffer.length === suppliedBuffer.length && timingSafeEqual(expectedBuffer, suppliedBuffer);
+}
+
+export function isAuthorized(request: Request, mode: "cron" | "worker" = "worker"): boolean {
+  const { cronSecret, workerSecret } = getServerConfig();
+  const expectedSecret = mode === "cron" ? cronSecret : workerSecret;
+
+  if (!expectedSecret) return false;
+
+  if (mode === "cron") {
+    const authorization = request.headers.get("authorization") ?? "";
+    const suppliedBearer = authorization.startsWith("Bearer ") ? authorization.slice("Bearer ".length).trim() : undefined;
+    return compareSecret(suppliedBearer, expectedSecret);
+  }
+
+  const suppliedDirect = request.headers.get("x-worker-secret") ?? undefined;
   const authorization = request.headers.get("authorization") ?? "";
   const suppliedBearer = authorization.startsWith("Bearer ") ? authorization.slice("Bearer ".length).trim() : undefined;
-  const suppliedValues = [suppliedDirect, suppliedBearer].filter((value): value is string => Boolean(value));
-
-  if (configuredSecrets.length === 0 || suppliedValues.length === 0) return false;
-
-  return suppliedValues.some((supplied) => configuredSecrets.some((configured) => {
-    const expected = Buffer.from(configured);
-    const actual = Buffer.from(supplied);
-    return expected.length === actual.length && timingSafeEqual(expected, actual);
-  }));
+  return compareSecret(suppliedDirect, expectedSecret) || compareSecret(suppliedBearer, expectedSecret);
 }
 
 async function parseExactJobId(request: Request): Promise<string | undefined> {
@@ -53,7 +59,8 @@ async function parseExactJobId(request: Request): Promise<string | undefined> {
 async function handleWorkerRequest(request: Request, allowExactJob: boolean) {
   const requestId = getRequestId(request);
   try {
-    if (!isAuthorized(request)) throw new AppError("AUTHORIZATION_ERROR", "Worker authorization failed.", { statusCode: 403 });
+    const authMode = allowExactJob ? "worker" : "cron";
+    if (!isAuthorized(request, authMode)) throw new AppError("AUTHORIZATION_ERROR", "Worker authorization failed.", { statusCode: 403 });
     const jobId = allowExactJob ? await parseExactJobId(request) : undefined;
     if (jobId && !/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(jobId)) {
       throw new AppError("VALIDATION_ERROR", "jobId must be a valid UUID.", { statusCode: 400 });
