@@ -37,6 +37,7 @@ async function parseExactJobId(request: Request): Promise<string | undefined> {
 
 async function handleWorkerRequest(request: Request, allowExactJob: boolean) {
   const requestId = getRequestId(request);
+  const workerRunId = crypto.randomUUID();
   try {
     const authMode = allowExactJob ? "worker" : "cron";
     if (!isAuthorized(request, authMode)) throw new AppError("AUTHORIZATION_ERROR", "Worker authorization failed.", { statusCode: 403 });
@@ -46,8 +47,8 @@ async function handleWorkerRequest(request: Request, allowExactJob: boolean) {
     }
 
     const provider = requireProvider(createProviderRegistry(), "supadata");
-    const processed = await new TranscriptJobWorker(undefined, provider).run(requestId, jobId);
-    return successResponse({ processed }, { requestId });
+    const result = await new TranscriptJobWorker(undefined, provider).run(requestId, jobId, workerRunId);
+    return successResponse({ ...result, processed: result.processedCount, workerRunId, worker_run_id: workerRunId }, { requestId });
   } catch (error) {
     return errorResponse(error, requestId);
   }

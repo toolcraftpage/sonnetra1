@@ -51,6 +51,7 @@ export function YouTubeUrlValidator() {
   const [data, setData] = useState<ValidationData | null>(null);
   const [job, setJob] = useState<JobData | null>(null);
   const [transcript, setTranscript] = useState<TranscriptData | null>(null);
+  const [detailUrl, setDetailUrl] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const pollRun = useRef(0);
@@ -69,6 +70,11 @@ export function YouTubeUrlValidator() {
       }
       setJob(payload.data.job);
       if (payload.data.transcript) setTranscript(payload.data.transcript);
+      if (payload.data.job.status === "completed") {
+        setDetailUrl(`/transcripts/${encodeURIComponent(payload.data.job.id)}?token=${encodeURIComponent(token)}`);
+      } else {
+        setDetailUrl(null);
+      }
       if (["completed", "failed", "cancelled"].includes(payload.data.job.status)) {
         setLoading(false);
         if (payload.data.job.status !== "completed") setError(payload.data.job.error?.message || "Transcript retrieval did not complete.");
@@ -178,6 +184,7 @@ export function YouTubeUrlValidator() {
       {error && <p className="validator-error" role="alert">{error}</p>}
       {job && <p className="job-status" aria-live="polite">{statusLabel(job.status)}</p>}
       {data && <div className="validator-success"><strong>Source validated</strong><dl><div><dt>Video ID</dt><dd>{data.videoId}</dd></div><div><dt>Canonical URL</dt><dd>{data.canonicalUrl}</dd></div><div><dt>Source type</dt><dd>{data.sourceType}</dd></div></dl></div>}
+      {detailUrl && <p><a href={detailUrl}>Open transcript detail</a></p>}
       {transcript && <section className="transcript-viewer" aria-labelledby="transcript-title">
         <div className="transcript-heading"><div><p className="panel-kicker">Transcript available</p><h3 id="transcript-title">{transcript.language.code}</h3></div><button type="button" onClick={copyTranscript}>Copy all</button></div>
         <ol>{transcript.segments.map((segment) => <li key={segment.index}><span className="timestamp">{timestamp(segment.startMs)}</span><p>{segment.text}</p></li>)}</ol>

@@ -15,6 +15,7 @@ export type TranscriptRequest = {
   sourceUrl: string;
   languageCode?: string;
   requestId?: string;
+  workerRunId?: string;
 };
 
 export type TranscriptResult = {

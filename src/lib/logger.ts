@@ -2,6 +2,15 @@ export type LogLevel = "debug" | "info" | "warn" | "error";
 
 export type LogMetadata = {
   requestId?: string;
+  workerRunId?: string;
+  jobUuid?: string;
+  queueScanCount?: number;
+  candidateCount?: number;
+  claimedCount?: number;
+  failedCount?: number;
+  processedCount?: number;
+  attemptCount?: number;
+  batchLimit?: number;
   provider?: string;
   videoId?: string;
   route?: string;
@@ -9,6 +18,8 @@ export type LogMetadata = {
   event?: string;
   durationMs?: number;
   errorCode?: string;
+  status?: string;
+  jobId?: string;
 };
 
 export type Logger = {

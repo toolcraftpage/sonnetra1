@@ -42,7 +42,7 @@ export class SupadataTranscriptProvider implements TranscriptProvider {
     const startedAt = Date.now();
     const result = await this.request(request.sourceUrl, request.languageCode, request.requestId);
     const normalized = normalizeSupadataResponse(result, request);
-    logger.info("Transcript provider completed", { provider: this.id, videoId: request.videoId, durationMs: Date.now() - startedAt, event: "transcript_complete" });
+    logger.info("Transcript provider completed", { requestId: request.requestId, workerRunId: request.workerRunId, provider: this.id, videoId: request.videoId, durationMs: Date.now() - startedAt, event: "transcript_complete" });
     return { ...normalized, providerReference: this.id };
   }
 

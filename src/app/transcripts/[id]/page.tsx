@@ -3,6 +3,8 @@ import { notFound, redirect } from "next/navigation";
 import { TranscriptReader } from "@/components/transcript-reader";
 import { createAuthenticatedSupabaseClient } from "@/lib/supabase/server";
 import { isValidUuid, userOwnsRecord } from "@/lib/auth";
+import { resolveJobAccessToken } from "@/server/job-access";
+import { contextForAnonymousToken, TranscriptJobService } from "@/server/transcript-jobs";
 
 type TranscriptDetail = {
   id: string;
@@ -26,17 +28,101 @@ type TranscriptSegment = {
   end_ms: number | null;
 };
 
-export default async function TranscriptDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function TranscriptDetailPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams?: Promise<Record<string, string | string[] | undefined>> }) {
   const { id } = await params;
+  const requestId = `transcript-detail-${id}`;
+  const token = resolveJobAccessToken(searchParams ? await searchParams : null);
+
+  if (!isValidUuid(id)) {
+    notFound();
+  }
+
   const supabase = await createAuthenticatedSupabaseClient();
   const { data: { user }, error: userError } = await supabase.auth.getUser();
 
   if (userError || !user) {
-    redirect("/login");
-  }
+    if (!token) {
+      redirect("/login");
+    }
 
-  if (!isValidUuid(id)) {
-    notFound();
+    const anonymousContext = contextForAnonymousToken(token, requestId);
+    const job = await new TranscriptJobService().get(id, anonymousContext);
+    if (!job) {
+      notFound();
+    }
+
+    if (job.status !== "completed") {
+      return (
+        <div className="auth-shell dashboard-shell">
+          <div className="dashboard-header">
+            <div>
+              <p className="panel-kicker">Transcript</p>
+              <h1>Job status</h1>
+            </div>
+            <div className="dashboard-actions">
+              <Link href="/#workspace" className="secondary-link">New transcript</Link>
+            </div>
+          </div>
+          <div className="dashboard-card">
+            <p>This transcript is still processing and is not ready for display yet.</p>
+            <p className="panel-kicker">Current status: {job.status}</p>
+          </div>
+        </div>
+      );
+    }
+
+    const transcript = await new TranscriptJobService().getResult(id, anonymousContext);
+    if (!transcript) {
+      notFound();
+    }
+
+    const segments = transcript.segments.map((segment) => ({
+      sequence_number: segment.index,
+      text: segment.text,
+      start_ms: segment.startMs ?? null,
+      end_ms: segment.endMs ?? null,
+    })) as unknown as TranscriptSegment[];
+    const transcriptRow = {
+      id,
+      job_id: id,
+      user_id: null,
+      video_id: transcript.metadata.videoId,
+      source_url: transcript.metadata.canonicalUrl,
+      title: null,
+      language_code: transcript.language.code,
+      language_name: transcript.language.name,
+      provider: "supadata",
+      full_text: transcript.segments.map((segment) => segment.text).join("\n"),
+      segment_count: transcript.segments.length,
+      created_at: new Date().toISOString(),
+    } as unknown as TranscriptDetail;
+
+    return (
+      <div className="auth-shell dashboard-shell">
+        <div className="dashboard-header">
+          <div>
+            <p className="panel-kicker">Transcript</p>
+            <h1>{transcriptRow.title || transcriptRow.video_id}</h1>
+          </div>
+          <div className="dashboard-actions">
+            <Link href="/#workspace" className="secondary-link">New transcript</Link>
+          </div>
+        </div>
+
+        <div className="dashboard-card">
+          <dl className="transcript-details">
+            <div><dt>Language</dt><dd>{transcriptRow.language_name ?? transcriptRow.language_code}</dd></div>
+            <div><dt>Source</dt><dd><a href={transcriptRow.source_url} target="_blank" rel="noreferrer">{transcriptRow.source_url}</a></dd></div>
+            <div><dt>Provider</dt><dd>{transcriptRow.provider}</dd></div>
+          </dl>
+        </div>
+
+        <div className="dashboard-card">
+          <h2>Transcript</h2>
+          <TranscriptReader transcript={transcriptRow} segments={segments} />
+        </div>
+      </div>
+    );
   }
 
   const { data: transcriptData, error: transcriptError } = await supabase
