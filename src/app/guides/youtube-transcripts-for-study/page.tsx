@@ -23,7 +23,7 @@ export default function GuideYouTubeTranscriptsForStudyPage() {
       <section className="page-section">
         <div className="page-card">
           <h2>Legitimate use</h2>
-          <p>Transcripts support study workflows such as review, summary writing, concept mapping, and language learning. They are best used as a readable companion to the original video rather than a substitute for respecting the source creator's rights or platform policies.</p>
+          <p>Transcripts support study workflows such as review, summary writing, concept mapping, and language learning. They are best used as a readable companion to the original video rather than a substitute for respecting source creator rights or platform policies.</p>
         </div>
       </section>
       <section className="page-section cta-panel">
