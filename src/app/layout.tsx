@@ -31,7 +31,7 @@ export const metadata: Metadata = {
       "A focused workspace for complete, searchable YouTube transcripts.",
   },
   twitter: {
-    card: "summary",
+    card: "summary_large_image",
     title: "Sonnetra | YouTube transcripts, made useful",
     description:
       "A focused workspace for complete, searchable YouTube transcripts.",

@@ -2,9 +2,10 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 
 const navItems = [
-  { href: "/", label: "Home" },
+  { href: "/youtube-transcript", label: "Transcript" },
   { href: "/how-it-works", label: "How It Works" },
   { href: "/features", label: "Features" },
+  { href: "/guides", label: "Guides" },
   { href: "/faq", label: "FAQ" },
   { href: "/about", label: "About" },
 ];
@@ -46,23 +47,30 @@ export function PublicPageShell({
       </main>
 
       <footer className="site-footer">
-        <div>
+        <div className="footer-links">
           <div className="footer-group">
             <span className="footer-title">Product</span>
-            <Link href="/">Home</Link>
-            <Link href="/how-it-works">How It Works</Link>
-            <Link href="/features">Features</Link>
+            <Link href="/youtube-transcript">YouTube Transcript</Link>
+            <Link href="/youtube-transcript-generator">Transcript Generator</Link>
+            <Link href="/youtube-transcript-extractor">Transcript Extractor</Link>
+            <Link href="/youtube-transcript-with-timestamps">Transcript with Timestamps</Link>
+          </div>
+        </div>
+        <div className="footer-links">
+          <div className="footer-group">
+            <span className="footer-title">Resources</span>
+            <Link href="/guides">Guides</Link>
             <Link href="/faq">FAQ</Link>
           </div>
         </div>
-        <div>
+        <div className="footer-links">
           <div className="footer-group">
             <span className="footer-title">Company</span>
             <Link href="/about">About</Link>
             <Link href="/contact">Contact</Link>
           </div>
         </div>
-        <div>
+        <div className="footer-links">
           <div className="footer-group">
             <span className="footer-title">Legal</span>
             <Link href="/privacy">Privacy</Link>

@@ -92,6 +92,28 @@ h1 { max-width: 790px; margin-bottom: 28px; font-family: Georgia, serif; font-si
 .principle-list h3 { margin: 42px 0 10px; font-size: 1rem; }
 .principle-list p { color: var(--muted); font-size: 0.92rem; line-height: 1.55; }
 .site-footer { padding: 24px 0 30px; border-top: 1px solid var(--line); color: var(--muted); font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; }
+.site-footer .footer-links {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+.site-footer .footer-links a { color: var(--muted); }
+.footer-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.footer-title {
+  margin-bottom: 4px;
+  color: var(--foreground);
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-weight: 800;
+}
+.footer-links .footer-group {
+  min-width: 160px;
+}
 
 .auth-shell {
   min-height: calc(100vh - 120px);
@@ -379,6 +401,22 @@ th {
 }
 
 .site-footer .footer-links a { color: var(--muted); }
+.footer-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.footer-title {
+  margin-bottom: 4px;
+  color: var(--foreground);
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-weight: 800;
+}
+.footer-links .footer-group {
+  min-width: 160px;
+}
 
 @media (max-width: 1024px) {
   .two-column, .three-column, .four-column {
