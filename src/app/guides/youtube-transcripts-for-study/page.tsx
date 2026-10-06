@@ -18,7 +18,7 @@ export default function GuideYouTubeTranscriptsForStudyPage() {
   return (
     <PublicPageShell
       title="YouTube transcripts for study"
-      intro="Transcripts are useful for review and structured note-taking when you need to revisit key ideas without rewatching an entire video."
+      intro={"Transcripts are useful for review and structured note-taking when you need to revisit key ideas without rewatching an entire video."}
     >
       <section className="page-section">
         <div className="page-card">
