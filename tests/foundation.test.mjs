@@ -86,6 +86,12 @@ test("worker route maps GET to cron auth and POST to worker auth", () => {
   assert.match(routeSource, /allowExactJob\s*\?\s*"worker"\s*:\s*"cron"/i);
 });
 
+test("Vercel cron must poll often enough to process queued transcript jobs", () => {
+  const vercelConfig = readFileSync(new URL("../vercel.json", import.meta.url), "utf8");
+
+  assert.match(vercelConfig, /"schedule"\s*:\s*"\*\/5 \* \* \* \*"/);
+});
+
 test("provider and transcript failures map to stable HTTP statuses", () => {
   assert.equal(new AppError(ERROR_CODES.RATE_LIMITED, "Limited.").statusCode, 429);
   assert.equal(new AppError(ERROR_CODES.PROVIDER_TIMEOUT, "Timed out.").statusCode, 504);
