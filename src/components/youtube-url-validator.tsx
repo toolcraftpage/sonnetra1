@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useRef, useState } from "react";
+import { TRANSCRIPT_JOB_POLL_INTERVAL_MS, TRANSCRIPT_JOB_POLL_MAX_ATTEMPTS } from "@/lib/constants";
 
 type ValidationData = { videoId: string; canonicalUrl: string; sourceType: string };
 type TranscriptData = {
@@ -36,7 +37,7 @@ function timestamp(milliseconds?: number) {
 }
 
 function statusLabel(status: JobData["status"]) {
-  return status === "queued" ? "Queued" : status === "processing" ? "Processing transcript" : status === "retrying" ? "Retrying" : status === "completed" ? "Transcript ready" : status === "cancelled" ? "Cancelled" : "Transcript unavailable";
+  return status === "queued" ? "Queued for processing" : status === "processing" ? "Getting transcript" : status === "retrying" ? "Retrying transcript" : status === "completed" ? "Transcript ready" : status === "cancelled" ? "Cancelled" : "Transcript unavailable";
 }
 
 const languageOptions = [
@@ -59,32 +60,43 @@ export function YouTubeUrlValidator() {
 
   async function pollJob(id: string, token: string, run: number) {
     setLoading(true);
-    for (let attempt = 0; attempt < 90; attempt += 1) {
-      if (run !== pollRun.current) return;
-      const response = await fetch(`/api/transcripts/${encodeURIComponent(id)}`, { headers: { "x-job-token": token } });
-      const payload = await response.json() as { success: boolean; data?: { job: JobData; transcript?: TranscriptData }; error?: { message?: string } };
-      if (run !== pollRun.current) return;
-      if (!response.ok || !payload.success || !payload.data) {
-        setError(payload.error?.message || "The job status could not be loaded.");
-        return;
+    try {
+      for (let attempt = 0; attempt < TRANSCRIPT_JOB_POLL_MAX_ATTEMPTS; attempt += 1) {
+        if (run !== pollRun.current) return;
+        let response: Response;
+        let payload: { success: boolean; data?: { job: JobData; transcript?: TranscriptData }; error?: { message?: string } };
+        try {
+          response = await fetch(`/api/transcripts/${encodeURIComponent(id)}`, { headers: { "x-job-token": token } });
+          payload = await response.json() as typeof payload;
+        } catch {
+          if (run === pollRun.current) {
+            setError("Connection interrupted while checking the job. It may still be processing; refresh to resume checking.");
+          }
+          return;
+        }
+        if (run !== pollRun.current) return;
+        if (!response.ok || !payload.success || !payload.data) {
+          setError(payload.error?.message || "The job status could not be loaded. Refresh to try again.");
+          return;
+        }
+        setJob(payload.data.job);
+        if (payload.data.transcript) setTranscript(payload.data.transcript);
+        if (payload.data.job.status === "completed") {
+          setDetailUrl(`/transcripts/${encodeURIComponent(payload.data.job.id)}?token=${encodeURIComponent(token)}`);
+        } else {
+          setDetailUrl(null);
+        }
+        if (["completed", "failed", "cancelled"].includes(payload.data.job.status)) {
+          if (payload.data.job.status !== "completed") setError(payload.data.job.error?.message || "Transcript retrieval did not complete.");
+          return;
+        }
+        await new Promise((resolve) => window.setTimeout(resolve, TRANSCRIPT_JOB_POLL_INTERVAL_MS));
       }
-      setJob(payload.data.job);
-      if (payload.data.transcript) setTranscript(payload.data.transcript);
-      if (payload.data.job.status === "completed") {
-        setDetailUrl(`/transcripts/${encodeURIComponent(payload.data.job.id)}?token=${encodeURIComponent(token)}`);
-      } else {
-        setDetailUrl(null);
+      if (run === pollRun.current) {
+        setError("This job is taking longer than expected. It remains saved; refresh later to check its status.");
       }
-      if (["completed", "failed", "cancelled"].includes(payload.data.job.status)) {
-        setLoading(false);
-        if (payload.data.job.status !== "completed") setError(payload.data.job.error?.message || "Transcript retrieval did not complete.");
-        return;
-      }
-      await new Promise((resolve) => window.setTimeout(resolve, 2_000));
-    }
-    if (run === pollRun.current) {
-      setLoading(false);
-      setError("Status polling paused. Refresh to check this job again.");
+    } finally {
+      if (run === pollRun.current) setLoading(false);
     }
   }
 
@@ -165,12 +177,12 @@ export function YouTubeUrlValidator() {
       </div>
       <h2>Bring a YouTube video into focus.</h2>
       <p className="validator-copy">Sonnetra validates the source, creates a durable job, and retrieves a real transcript through the configured provider.</p>
-      <form onSubmit={submit}>
+      <form onSubmit={submit} aria-busy={loading}>
         <label htmlFor="youtube-url">YouTube URL</label>
         <div className="validator-controls">
           <input id="youtube-url" name="url" type="url" value={url} onChange={(event) => setUrl(event.target.value)} placeholder="https://www.youtube.com/watch?v=..." autoComplete="url" required />
           <button type="button" className="secondary-action" onClick={pasteFromClipboard} disabled={loading}>Paste</button>
-          <button type="submit" disabled={loading}>{loading ? "Working..." : "Get Transcript"}</button>
+          <button type="submit" disabled={loading}>{loading ? "Getting transcript..." : "Get Transcript"}</button>
         </div>
       </form>
       <div className="language-control">
@@ -182,7 +194,7 @@ export function YouTubeUrlValidator() {
         </select>
       </div>
       {error && <p className="validator-error" role="alert">{error}</p>}
-      {job && <p className="job-status" aria-live="polite">{statusLabel(job.status)}</p>}
+      {job && <p className="job-status" role="status">{statusLabel(job.status)}</p>}
       {data && <div className="validator-success"><strong>Source validated</strong><dl><div><dt>Video ID</dt><dd>{data.videoId}</dd></div><div><dt>Canonical URL</dt><dd>{data.canonicalUrl}</dd></div><div><dt>Source type</dt><dd>{data.sourceType}</dd></div></dl></div>}
       {detailUrl && <p><a href={detailUrl}>Open transcript detail</a></p>}
       {transcript && <section className="transcript-viewer" aria-labelledby="transcript-title">

@@ -12,8 +12,8 @@ export default function Home() {
           <span>SONNETRA</span>
         </Link>
         <nav aria-label="Primary navigation" className="site-nav">
-          <Link href="/how-it-works">How It Works</Link>
-          <Link href="/features">Features</Link>
+          <Link href="/#workspace">Transcript</Link>
+          <Link href="/guides">Guides</Link>
           <Link href="/faq">FAQ</Link>
           <Link href="/about">About</Link>
           <Link href="/dashboard">My Transcripts</Link>
@@ -24,48 +24,28 @@ export default function Home() {
 
       <main>
         <section className="hero" aria-labelledby="hero-title">
-          <div className="hero-grid">
-            <div className="hero-copy-wrap">
-              <p className="eyebrow">Real transcript extraction</p>
-              <h1 id="hero-title">Turn YouTube videos into complete, usable transcripts.</h1>
-              <p className="hero-copy">
-                Paste a YouTube link and transform spoken content into searchable, copyable transcript text for review and reuse.
-              </p>
-              <div className="cta-row">
-                <a href="#workspace" className="primary-action">Get Transcript</a>
-                <Link href="/how-it-works" className="secondary-link">See How It Works</Link>
-              </div>
-              <div className="stats-row" aria-label="Key product value points">
-                <div className="stat-card">
-                  <strong>Live jobs</strong>
-                  <span>Queued, processing, and completion states</span>
-                </div>
-                <div className="stat-card">
-                  <strong>Unicode-ready</strong>
-                  <span>Amharic and multilingual text preserved</span>
-                </div>
-                <div className="stat-card">
-                  <strong>Searchable</strong>
-                  <span>Find moments and copy clean transcript text</span>
-                </div>
-              </div>
+          <div className="hero-copy-wrap">
+            <p className="eyebrow">YouTube transcript workspace</p>
+            <h1 id="hero-title">Turn YouTube videos into useful transcripts.</h1>
+            <p className="hero-copy">
+              Submit a video with available captions to retrieve searchable transcript text. Language and timestamps depend on the source transcript returned by the provider.
+            </p>
+            <div className="cta-row">
+              <a href="#workspace" className="primary-action">Get Transcript</a>
+              <Link href="/how-it-works" className="secondary-link">How It Works</Link>
             </div>
-
-            <div className="hero-preview" aria-label="Transcript workspace preview">
-              <div className="preview-card">
-                <div className="preview-header">
-                  <span>Transcript workflow</span>
-                  <span className="status-pill">Live</span>
-                </div>
-                <div className="preview-line">https://www.youtube.com/watch?v=example</div>
-                <div className="preview-body">
-                  <div className="preview-time">00:12</div>
-                  <p>Source validated and queued for retrieval.</p>
-                </div>
-                <div className="preview-body muted">
-                  <div className="preview-time">00:26</div>
-                  <p>Transcript text is normalized and prepared for search and copying.</p>
-                </div>
+            <div className="stats-row" aria-label="Transcript workspace capabilities">
+              <div className="stat-card">
+                <strong>Source text</strong>
+                <span>Transcript wording is preserved</span>
+              </div>
+              <div className="stat-card">
+                <strong>Multiple languages</strong>
+                <span>Unicode text stays intact</span>
+              </div>
+              <div className="stat-card">
+                <strong>Useful output</strong>
+                <span>Search, copy, and export results</span>
               </div>
             </div>
           </div>
@@ -94,7 +74,7 @@ export default function Home() {
             <article className="step-card">
               <span>03</span>
               <h3>Read transcript</h3>
-              <p>When the worker completes the job, the transcript is stored and available for viewing.</p>
+              <p>When processing completes, review the saved transcript and use its available timestamps and language metadata.</p>
             </article>
           </div>
         </section>
@@ -162,11 +142,15 @@ export default function Home() {
 
       <footer className="site-footer">
         <div className="footer-links">
+          <Link href="/#workspace">Transcript</Link>
+          <Link href="/guides">Guides</Link>
+          <Link href="/faq">FAQ</Link>
+          <Link href="/about">About</Link>
           <Link href="/privacy">Privacy</Link>
           <Link href="/terms">Terms</Link>
           <Link href="/contact">Contact</Link>
         </div>
-        <span>SONNETRA / Transcript workflow</span>
+        <span>SONNETRA / YouTube transcripts</span>
       </footer>
     </div>
   );

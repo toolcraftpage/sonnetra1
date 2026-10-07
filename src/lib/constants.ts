@@ -10,6 +10,8 @@ export const MAX_REQUEST_ID_LENGTH = 128;
 export const SUPADATA_API_URL = "https://api.supadata.ai/v1/transcript";
 export const SUPADATA_TIMEOUT_MS = 30_000;
 export const SUPADATA_MAX_RETRIES = 2;
+export const TRANSCRIPT_JOB_POLL_INTERVAL_MS = 5_000;
+export const TRANSCRIPT_JOB_POLL_MAX_ATTEMPTS = 120;
 
 export const TRANSCRIPT_FORMATS = ["plain", "timestamps"] as const;
 export const EXPORT_FORMATS = ["txt", "srt", "vtt", "json", "docx", "pdf"] as const;

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { errorResponse, successResponse } from "../src/lib/api-response.ts";
-import { ERROR_CODES } from "../src/lib/constants.ts";
+import { ERROR_CODES, TRANSCRIPT_JOB_POLL_INTERVAL_MS, TRANSCRIPT_JOB_POLL_MAX_ATTEMPTS } from "../src/lib/constants.ts";
 import { readFileSync } from "node:fs";
 import { AppError, serializeError } from "../src/lib/errors.ts";
 import { ProviderRegistry, } from "../src/lib/providers/transcript.ts";
@@ -90,6 +90,16 @@ test("Vercel cron must poll often enough to process queued transcript jobs", () 
   const vercelConfig = readFileSync(new URL("../vercel.json", import.meta.url), "utf8");
 
   assert.match(vercelConfig, /"schedule"\s*:\s*"\*\/5 \* \* \* \*"/);
+});
+
+test("job status polling covers multiple five-minute worker intervals", () => {
+  assert.ok(TRANSCRIPT_JOB_POLL_INTERVAL_MS * TRANSCRIPT_JOB_POLL_MAX_ATTEMPTS >= 10 * 60_000);
+});
+
+test("homepage does not present fabricated transcript progress", () => {
+  const homepage = readFileSync(new URL("../src/app/page.tsx", import.meta.url), "utf8");
+
+  assert.doesNotMatch(homepage, /watch\?v=example|Transcript workflow|Source validated and queued for retrieval/);
 });
 
 test("provider and transcript failures map to stable HTTP statuses", () => {
