@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { ERROR_CODES } from "../src/lib/constants.ts";
-import { parseYouTubeUrl } from "../src/lib/youtube-url.ts";
+import { canonicalYouTubeSourceUrl, parseYouTubeUrl } from "../src/lib/youtube-url.ts";
 
 const id = "dQw4w9WgXcQ";
 
@@ -34,6 +34,21 @@ test("accepts all supported YouTube URL forms and preserves ID case", () => {
 test("canonicalization ignores playback, playlist, tracking, and unknown parameters", () => {
   const result = valid(`https://www.youtube.com/watch?feature=shared&v=${id}&start=10&list=abc&utm_campaign=x`);
   assert.equal(result.originalUrl, `https://www.youtube.com/watch?feature=shared&v=${id}&start=10&list=abc&utm_campaign=x`);
+});
+
+test("provider source URLs are canonicalized and must match the stored video ID", () => {
+  assert.equal(
+    canonicalYouTubeSourceUrl(id, `https://youtu.be/${id}?t=42`),
+    `https://www.youtube.com/watch?v=${id}`,
+  );
+  assert.throws(
+    () => canonicalYouTubeSourceUrl("aaaaaaaaaaa", `https://youtu.be/${id}`),
+    (error) => error.code === ERROR_CODES.PROVIDER_MALFORMED_RESPONSE,
+  );
+  assert.throws(
+    () => canonicalYouTubeSourceUrl(id, "https://attacker.example/video"),
+    (error) => error.code === ERROR_CODES.UNSUPPORTED_HOST,
+  );
 });
 
 test("rejects malformed, incomplete, and unsupported inputs with typed failures", () => {

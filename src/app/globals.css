@@ -90,6 +90,19 @@ h1 { max-width: 790px; margin-bottom: 24px; font-family: Georgia, serif; font-si
 .transcript-viewer li { display: grid; grid-template-columns: 52px 1fr; gap: 14px; padding: 12px 0; border-bottom: 1px solid var(--line); }
 .transcript-viewer li p { margin: 0; line-height: 1.6; white-space: pre-wrap; }
 .timestamp { color: var(--accent-dark); font-family: var(--font-geist-mono), monospace; font-size: 0.78rem; }
+.transcript-toolbar { display: flex; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; gap: 18px; }
+.search-box { display: grid; flex: 1 1 250px; gap: 7px; min-width: 0; }
+.search-box label { font-size: 0.82rem; font-weight: 700; }
+.search-box input { width: 100%; min-width: 0; padding: 11px 12px; border: 1px solid var(--line); background: white; color: var(--foreground); font: inherit; }
+.viewer-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.transcript-reader-shell .secondary-action { margin: 0; border-radius: 4px; }
+.export-menu { position: relative; }
+.export-menu > summary { list-style: none; cursor: pointer; }
+.export-menu > summary::-webkit-details-marker { display: none; }
+.export-menu-items { position: absolute; top: calc(100% + 4px); right: 0; z-index: 5; display: grid; min-width: 128px; padding: 5px; border: 1px solid var(--line); background: var(--surface); box-shadow: 0 8px 20px rgba(25, 35, 31, 0.12); }
+.export-menu-items button { padding: 9px 10px; border: 0; background: transparent; color: var(--foreground); font: inherit; text-align: left; cursor: pointer; }
+.export-menu-items button:hover, .export-menu-items button:focus-visible { background: rgba(212, 84, 53, 0.08); }
+.export-menu-items button:disabled, .viewer-actions button:disabled { cursor: not-allowed; opacity: 0.5; }
 .status-chip { flex: 0 0 auto; padding: 8px 12px; border: 1px solid #e4a18f; color: var(--accent-dark); font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; }
 .principles { max-width: 1180px; margin: 0 auto; padding: 76px 0 100px; display: grid; grid-template-columns: 0.8fr 1.5fr; gap: 10vw; border-top: 1px solid var(--line); }
 .principles h2 { font-family: Georgia, serif; font-size: 2.5rem; font-weight: 400; }
@@ -138,6 +151,20 @@ h1 { max-width: 790px; margin-bottom: 24px; font-family: Georgia, serif; font-si
 .faq-list article { padding-top: 16px; border-top: 1px solid var(--line); }
 .faq-list h3 { margin-bottom: 9px; font-size: 1rem; }
 .cta-section { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 36px 0; border-top: 1px solid var(--line); }
+.free-tier-panel { display: grid; grid-template-columns: 1.3fr 0.7fr; gap: 28px; padding: 26px; border: 1px solid var(--line); background: var(--surface); }
+.free-tier-panel h2, .pro-preview h3 { font-family: Georgia, serif; font-weight: 400; }
+.free-tier-panel h2 { max-width: 620px; font-size: 2rem; line-height: 1.15; }
+.free-tier-panel p:not(.eyebrow), .guide-copy p, .guide-copy li { color: var(--muted); font-size: 0.96rem; line-height: 1.75; }
+.free-tier-panel > div:first-child p:last-child { margin-bottom: 0; }
+.pro-preview { align-self: stretch; padding: 22px; border: 1px solid var(--line); background: rgba(212, 84, 53, 0.05); }
+.pro-preview h3 { margin-bottom: 10px; font-size: 1.55rem; }
+.pro-preview .secondary-link { margin-top: 4px; }
+.guide-copy { max-width: 900px; }
+.guide-copy h3 { margin: 34px 0 12px; font-family: Georgia, serif; font-size: 1.55rem; font-weight: 400; }
+.guide-copy h3:first-child { margin-top: 0; }
+.guide-copy h4 { margin: 22px 0 8px; font-size: 1rem; }
+.guide-copy ul { padding-left: 24px; }
+.guide-copy li + li { margin-top: 8px; }
 
 .auth-shell {
   min-height: calc(100vh - 120px);
@@ -418,6 +445,30 @@ th {
   text-transform: uppercase;
 }
 
+.cookie-consent-banner {
+  position: fixed;
+  z-index: 50;
+  right: 20px;
+  bottom: 20px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 20px;
+  width: min(760px, calc(100vw - 40px));
+  padding: 22px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  box-shadow: 0 14px 44px rgba(25, 35, 31, 0.2);
+}
+.cookie-consent-copy h2 { margin-bottom: 8px; font-family: Georgia, serif; font-size: 1.35rem; font-weight: 400; }
+.cookie-consent-copy p:not(.eyebrow) { margin-bottom: 8px; color: var(--muted); font-size: 0.84rem; line-height: 1.55; }
+.cookie-consent-copy a { color: var(--accent-dark); text-decoration: underline; }
+.cookie-consent-copy .cookie-cmp-note { margin-bottom: 0; font-size: 0.76rem; }
+.cookie-consent-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+.cookie-consent-actions button, .cookie-settings-button { padding: 10px 12px; border: 1px solid var(--foreground); background: var(--surface); color: var(--foreground); font: inherit; font-size: 0.8rem; font-weight: 700; cursor: pointer; }
+.cookie-consent-actions .cookie-accept-button { background: var(--foreground); color: var(--surface); }
+.cookie-settings-button { position: fixed; z-index: 49; right: 16px; bottom: 16px; box-shadow: 0 4px 16px rgba(25, 35, 31, 0.15); }
+
 .site-footer .footer-links {
   display: flex;
   gap: 18px;
@@ -449,6 +500,9 @@ th {
 }
 
 @media (max-width: 720px) {
+  .cookie-consent-banner { right: 10px; bottom: 10px; grid-template-columns: 1fr; gap: 12px; width: calc(100vw - 20px); padding: 18px; }
+  .cookie-consent-actions { justify-content: stretch; }
+  .cookie-consent-actions button { flex: 1; }
   .site-header { align-items: flex-start; flex-direction: column; justify-content: center; gap: 12px; padding: 14px 0; }
   .site-nav {
     width: 100%;
@@ -467,8 +521,12 @@ th {
   .stat-card, .stat-card + .stat-card { padding: 14px 0; border-bottom: 1px solid var(--line); border-left: 0; }
   .workspace-panel { align-items: flex-start; flex-direction: column; }
   .validator-controls { align-items: stretch; flex-direction: column; }
+  .transcript-toolbar { align-items: stretch; flex-direction: column; }
+  .viewer-actions { width: 100%; }
+  .viewer-actions > button, .export-menu > summary { min-height: 42px; }
   .steps-grid, .info-grid, .faq-list { grid-template-columns: 1fr; }
   .feature-block { padding: 52px 0; }
+  .free-tier-panel { grid-template-columns: 1fr; padding: 20px; }
   .section-heading h2, .cta-section h2 { font-size: 2rem; }
   .cta-section { align-items: flex-start; flex-direction: column; padding: 30px 0; }
   .principles { display: block; padding: 64px 0 72px; }

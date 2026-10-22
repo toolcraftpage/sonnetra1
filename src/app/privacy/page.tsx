@@ -4,7 +4,7 @@ import { PublicPageShell } from "@/components/public-page-shell";
 
 export const metadata: Metadata = {
   title: "Privacy",
-  description: "Read the privacy information for Sonnetra, including how transcript data, access tokens, and authentication are handled.",
+  description: "Learn how Sonnetra handles transcript data, authentication cookies, service providers, and Google AdSense advertising.",
   alternates: { canonical: "/privacy" },
   openGraph: {
     title: "Sonnetra privacy",
@@ -22,9 +22,19 @@ export default function PrivacyPage() {
       <section className="page-section legal-section">
         <div className="page-card">
           <h2>How transcript data is handled</h2>
-          <p>Transcript content is processed on the server and stored in the configured persistence layer. The browser does not become the final authority on transcript ownership or content access.</p>
-          <p>Authenticated users are only able to access transcripts associated with their account through ownership checks. Anonymous access is controlled by server-issued access tokens that must match the correct job and user context.</p>
-          <p>Service-role credentials and provider secrets remain server-side and are not exposed to browser clients.</p>
+          <p>When you submit a YouTube URL, Sonnetra processes the source through its transcript provider and stores job and transcript data in its configured database. The URL, requested language, transcript text, timestamps, and processing details may be handled to provide the service. Supadata may receive the source information needed to retrieve captions under its own terms and privacy practices.</p>
+          <p>Authenticated users access transcripts associated with their account through ownership checks. Anonymous transcript access uses a server-issued token bound to the specific job; keep any private transcript link or token confidential. Supabase authentication may use cookies to maintain a signed-in session.</p>
+          <p>Service-role credentials and provider secrets are kept on the server and are not sent to browser clients. Data is retained as needed to operate the service and according to the configured storage and account processes; contact support for data-access or deletion questions.</p>
+        </div>
+      </section>
+
+      <section className="page-section legal-section">
+        <div className="page-card">
+          <h2>Cookies and advertising</h2>
+          <p>Sonnetra uses essential session cookies when authentication features require them. The site also stores your optional-advertising choice in a first-party preference cookie. If Google AdSense is enabled, its script and advertising cookies are not loaded unless you allow optional advertising. You can revisit your choice using the Cookie settings control; changing it affects future ad activation but cannot erase cookies or data already handled by an advertising provider.</p>
+          <p>Before serving ads to visitors in the European Economic Area (EEA) or United Kingdom, the production site must use a Google-certified consent management platform (CMP), such as CookieYes or Didomi, configured for applicable consent requirements. This site&apos;s lightweight preference banner is not a certified CMP and does not replace that production requirement.</p>
+          <p>You can manage cookies through your browser settings, review <a href="https://myadcenter.google.com/" target="_blank" rel="noreferrer">Google&apos;s ad controls</a>, and read <a href="https://policies.google.com/technologies/ads" target="_blank" rel="noreferrer">Google&apos;s information about advertising technologies</a>. Blocking essential cookies may prevent sign-in or other session-dependent features from working. Third-party advertising technologies are governed by their providers&apos; own privacy terms.</p>
+          <p>For questions about information handled by Sonnetra, email <a href="mailto:hello@sonnetra.app">hello@sonnetra.app</a>. This notice describes the current product at a high level and is not a substitute for advice about legal requirements in a particular jurisdiction.</p>
         </div>
       </section>
 

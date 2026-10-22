@@ -24,8 +24,8 @@ export default function ContactPage() {
         <div className="page-grid two-column">
           <article className="page-card">
             <h2>Product questions</h2>
-            <p>For general inquiries about transcript extraction, YouTube source handling, or product behavior, contact the Sonnetra team through the primary support email listed for the application.</p>
-            <p><strong>Email:</strong> hello@sonnetra.app</p>
+            <p>For general inquiries about transcript extraction, YouTube source handling, privacy, or product behavior, email the Sonnetra support address.</p>
+            <p><strong>Email:</strong> <a href="mailto:hello@sonnetra.app">hello@sonnetra.app</a></p>
           </article>
           <article className="page-card">
             <h2>Workflow and support</h2>

@@ -29,6 +29,13 @@ export default function TermsPage() {
 
       <section className="page-section legal-section">
         <div className="page-card">
+          <h2>Copyright disclaimer</h2>
+          <p>We do not claim ownership of extracted transcripts. Users are solely responsible for ensuring their use complies with YouTube&apos;s Terms of Service and applicable copyright laws.</p>
+        </div>
+      </section>
+
+      <section className="page-section legal-section">
+        <div className="page-card">
           <h2>Service reliability</h2>
           <p>Sonnetra may be unavailable, rate-limited, or unable to retrieve a transcript for a given video depending on source conditions, provider behavior, or system capacity. The product should be treated as a practical workflow tool rather than a guaranteed source of all transcript content.</p>
           <p>Users remain responsible for verifying the accuracy, completeness, and legality of any transcript they use, copy, share, or export.</p>

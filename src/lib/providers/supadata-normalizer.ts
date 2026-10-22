@@ -48,13 +48,18 @@ export function normalizeSupadataResponse(
     if (typeof item.text !== "string" || !item.text.trim()) {
       throw new AppError(ERROR_CODES.PROVIDER_MALFORMED_RESPONSE, "The transcript provider returned a malformed segment.");
     }
+    const hasOffset = item.offset !== undefined && item.offset !== null;
+    const hasDuration = item.duration !== undefined && item.duration !== null;
     const startMs = finiteNumber(item.offset);
     const durationMs = finiteNumber(item.duration);
     const endMs = startMs !== undefined && durationMs !== undefined ? startMs + durationMs : undefined;
+    if ((hasOffset && startMs === undefined) || (hasDuration && durationMs === undefined) || (hasDuration && startMs === undefined)) {
+      throw new AppError(ERROR_CODES.PROVIDER_MALFORMED_RESPONSE, "The transcript provider returned invalid segment timing.");
+    }
     if (startMs !== undefined && (startMs < 0 || startMs < previousStart)) {
       throw new AppError(ERROR_CODES.PROVIDER_MALFORMED_RESPONSE, "The transcript provider returned invalid segment timing.");
     }
-    if (durationMs !== undefined && (durationMs < 0 || (endMs !== undefined && endMs < startMs!))) {
+    if (durationMs !== undefined && (durationMs < 0 || (endMs !== undefined && (!Number.isFinite(endMs) || endMs < startMs!)))) {
       throw new AppError(ERROR_CODES.PROVIDER_MALFORMED_RESPONSE, "The transcript provider returned invalid segment timing.");
     }
     if (typeof item.lang === "string" && languageCode && item.lang !== languageCode) {

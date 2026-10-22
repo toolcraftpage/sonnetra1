@@ -1,4 +1,4 @@
-import { MAX_YOUTUBE_URL_LENGTH, type ErrorCode } from "./constants.ts";
+import { ERROR_CODES, MAX_YOUTUBE_URL_LENGTH, type ErrorCode } from "./constants.ts";
 import { AppError } from "./errors.ts";
 
 export const YOUTUBE_HOSTS = [
@@ -130,4 +130,12 @@ export function parseYouTubeUrl(value: unknown): YouTubeUrlParseResult {
 export function parseYouTubeUrlOrThrow(value: unknown): YouTubeUrlParseSuccess {
   const result = parseYouTubeUrl(value);
   return result.valid ? result : throwForFailure(result);
+}
+
+export function canonicalYouTubeSourceUrl(videoId: string, sourceUrl: string): string {
+  const source = parseYouTubeUrlOrThrow(sourceUrl);
+  if (source.videoId !== videoId) {
+    throw new AppError(ERROR_CODES.PROVIDER_MALFORMED_RESPONSE, "The stored YouTube source does not match its video ID.");
+  }
+  return source.canonicalUrl;
 }

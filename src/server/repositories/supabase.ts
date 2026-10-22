@@ -4,14 +4,10 @@ import { createServiceRoleSupabaseClient } from "@/lib/supabase/server";
 import { AppError } from "@/lib/errors";
 import type { RowFor } from "@/types/database";
 import type { CompleteTranscriptInput, JobFailureInput, RepositoryContext, TranscriptJobRepository, ListOptions, TranscriptJobInsert, PersistedTranscript } from "./contracts";
+import { mapPersistedTranscript } from "./map-persisted-transcript";
+import { queryForTranscriptJobContext, transcriptJobByIdQuery } from "./transcript-job-access-query";
 
 type SupabaseClient = ReturnType<typeof createServiceRoleSupabaseClient>;
-
-function queryForContext(context: RepositoryContext): string {
-  if (context.userId) return `user_id=eq.${encodeURIComponent(context.userId)}`;
-  if (context.accessTokenHash) return `access_token_hash=eq.${encodeURIComponent(context.accessTokenHash)}`;
-  return "id=eq.00000000-0000-0000-0000-000000000000";
-}
 
 export class SupabaseTranscriptJobRepository implements TranscriptJobRepository {
   private readonly client: SupabaseClient;
@@ -21,11 +17,11 @@ export class SupabaseTranscriptJobRepository implements TranscriptJobRepository 
   }
 
   async getById(id: string, context: RepositoryContext) {
-    return this.single<RowFor<"transcript_jobs">>(`transcript_jobs?id=eq.${encodeURIComponent(id)}&${queryForContext(context)}`);
+    return this.single<RowFor<"transcript_jobs">>(transcriptJobByIdQuery(id, context));
   }
 
   async list(options: ListOptions, context: RepositoryContext) {
-    return this.rows<RowFor<"transcript_jobs">>(`transcript_jobs?${queryForContext(context)}&order=created_at.desc&limit=${options.limit}&offset=${options.offset}`);
+    return this.rows<RowFor<"transcript_jobs">>(`transcript_jobs?${queryForTranscriptJobContext(context)}&order=created_at.desc&limit=${options.limit}&offset=${options.offset}`);
   }
 
   async create(input: TranscriptJobInsert, context: RepositoryContext) {
@@ -34,7 +30,7 @@ export class SupabaseTranscriptJobRepository implements TranscriptJobRepository 
   }
 
   async updateStatus(id: string, status: RowFor<"transcript_jobs">["status"], context: RepositoryContext) {
-    return this.single<RowFor<"transcript_jobs">>(`transcript_jobs?id=eq.${encodeURIComponent(id)}&${queryForContext(context)}`, { method: "PATCH", body: { status }, prefer: "return=representation" });
+    return this.single<RowFor<"transcript_jobs">>(transcriptJobByIdQuery(id, context), { method: "PATCH", body: { status }, prefer: "return=representation" });
   }
 
   async claimNext(staleBefore: string, context: RepositoryContext) {
@@ -63,20 +59,16 @@ export class SupabaseTranscriptJobRepository implements TranscriptJobRepository 
       last_error_message: input.errorMessage,
       next_retry_at: input.nextRetryAt ?? null,
     };
-    return this.single<RowFor<"transcript_jobs">>(`transcript_jobs?id=eq.${encodeURIComponent(id)}&${queryForContext(context)}`, { method: "PATCH", body, prefer: "return=representation" });
+    return this.single<RowFor<"transcript_jobs">>(transcriptJobByIdQuery(id, context), { method: "PATCH", body, prefer: "return=representation" });
   }
 
   async getResult(jobId: string, context: RepositoryContext): Promise<PersistedTranscript | null> {
     void context;
-    const transcriptRows = await this.rows<{ id: string; video_id: string; source_url: string; language_code: string; language_name: string; is_auto_generated: boolean }>(`transcripts?job_id=eq.${encodeURIComponent(jobId)}&select=id,video_id,source_url,language_code,language_name,is_auto_generated`);
+    const transcriptRows = await this.rows<{ id: string; video_id: string; source_url: string; title: string | null; full_text: string | null; created_at: string; language_code: string; language_name: string; is_auto_generated: boolean; provider: string; provider_reference: string | null; source_metadata: Record<string, unknown> }>(`transcripts?job_id=eq.${encodeURIComponent(jobId)}&select=id,video_id,source_url,title,full_text,created_at,language_code,language_name,is_auto_generated,provider,provider_reference,source_metadata`);
     const transcript = transcriptRows[0];
     if (!transcript) return null;
     const segments = await this.rows<{ sequence_number: number; text: string; start_ms: number | null; end_ms: number | null }>(`transcript_segments?transcript_id=eq.${encodeURIComponent(transcript.id)}&select=sequence_number,text,start_ms,end_ms&order=sequence_number.asc`);
-    return {
-      language: { code: transcript.language_code, name: transcript.language_name, ...(transcript.is_auto_generated ? { isGenerated: true } : {}) },
-      metadata: { videoId: transcript.video_id, canonicalUrl: transcript.source_url },
-      segments: segments.map((segment) => ({ index: segment.sequence_number, text: segment.text, ...(segment.start_ms === null ? {} : { startMs: segment.start_ms }), ...(segment.end_ms === null ? {} : { endMs: segment.end_ms }) })),
-    };
+    return mapPersistedTranscript(transcript, segments);
   }
 
   private async rows<T>(path: string, options: { method?: string; body?: unknown; prefer?: string } = {}): Promise<T[]> {

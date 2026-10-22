@@ -5,29 +5,33 @@
   "type": "module",
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "next build && node scripts/generate-build-manifest.mjs",
+    "build:test": "node scripts/build-test.mjs",
+    "migrate:test": "node scripts/migrate-test.mjs",
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "test": "node --experimental-strip-types --test tests/*.test.mjs",
+    "test:e2e": "playwright test",
     "check:env": "node --experimental-strip-types scripts/check-env.mjs",
     "phase17": "node --experimental-strip-types scripts/phase17-live.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.57.4",
-    "next": "16.3.6",
+    "next": "16.3.8",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "server-only": "^0.0.1"
   },
   "devDependencies": {
+    "@playwright/test": "^1.64.1",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "16.3.6",
+    "eslint-config-next": "16.3.8",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

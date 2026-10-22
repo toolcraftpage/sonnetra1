@@ -1,15 +1,15 @@
 # Sonnetra
 
-Sonnetra is a YouTube transcript application with a durable Supabase job pipeline and a server-side Supadata provider. The Phase 8B Supabase project link, remote migrations, and a real read-only query have been verified. Phase 8C live transcript retrieval is not verified: `SUPADATA_API_KEY` is currently missing from `.env.local`.
+Sonnetra is a YouTube transcript application with a durable Supabase job pipeline and a server-side Supadata provider. The Phase 8B Supabase project link, remote migrations, and a real read-only query have been verified. Phase 8C live transcript retrieval is not verified.
 
 ## Foundation
 
-- Next.js `16.3.6` App Router with TypeScript and Tailwind CSS
+- Next.js `16.3.8` App Router with TypeScript and Tailwind CSS
 - npm is the package manager for this workspace
 - Supabase CLI is available locally; the configured project link and remote migrations were verified in Phase 8B
 - `package-lock.json` is the reproducible dependency manifest; use `npm ci` for clean installs
 - Environment status can be inspected with `npm run check:env`; only names and statuses are printed
-- `GET /api/health` reports application readiness and whether optional Supabase/Supadata configuration is present
+- `GET /api/health` reports Supabase/Supadata configuration presence and marks integrations as not checked; it does not verify connectivity
 - `POST /api/sources/validate` deterministically parses a YouTube URL without contacting YouTube or a transcript provider
 - `POST /api/transcripts` creates a durable queued job; the browser polls `GET /api/transcripts/:jobId` with a one-time anonymous job token
 - `POST /api/internal/worker` is the bounded, worker-secret-protected invocation boundary and uses the real Supadata provider registry
@@ -42,7 +42,7 @@ The canonical parser accepts exact hostnames `youtube.com`, `www.youtube.com`, `
 
 Validation proves only that the URL is structurally supported. It does not prove that a video exists, that a transcript exists, or that a language is available.
 
-The Supadata adapter calls `GET https://api.supadata.ai/v1/transcript` server-side with `x-api-key`, `mode=native`, and timestamped chunks. An optional language is forwarded. Provider responses are normalized before persistence; no fixture or mock provider is enabled in production. Configure `SUPADATA_API_KEY` in `.env.local` for local use and never prefix it with `NEXT_PUBLIC_`.
+The Supadata adapter calls `GET https://api.supadata.ai/v1/transcript` server-side with `x-api-key`, `mode=native`, and timestamped chunks. An optional language is forwarded. Provider responses are normalized before persistence; no fixture or mock provider is enabled in production. Configure `SUPADATA_API_KEY` in `.env.local` for local use and never prefix it with `NEXT_PUBLIC_`. The environment check only establishes that a value is present; it does not verify that Supadata accepts it.
 
 The durable worker claims jobs through PostgreSQL functions and atomically persists transcript metadata and ordered segments. The browser never calls Supadata or Supabase directly. A real Supadata-backed job, transcript persistence, and browser completion still require a configured provider key and have not been proven by the current Phase 8C verification.
 

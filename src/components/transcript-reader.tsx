@@ -2,6 +2,8 @@
 
 import { useMemo, useRef, useState, type ReactNode } from "react";
 import { countMatches, getVisibleSegments } from "@/lib/transcript-search";
+import { formatTranscriptForCopy } from "@/lib/transcript-copy";
+import { buildTranscriptExport, formatTranscriptWithTimestamps, hasSegmentStartTimes, hasValidSubtitleTiming } from "@/lib/transcript-export";
 
 type TranscriptRow = {
   id: string;
@@ -10,7 +12,10 @@ type TranscriptRow = {
   title: string | null;
   language_code: string;
   language_name: string;
+  is_auto_generated: boolean;
   provider: string;
+  provider_reference: string | null;
+  source_metadata: Record<string, unknown>;
   full_text: string | null;
   created_at: string;
 };
@@ -37,58 +42,6 @@ function formatTimestamp(milliseconds: number): string {
     : `${minutes}:${String(seconds).padStart(2, "0")}`;
 }
 
-function buildPlainText(segments: TranscriptSegment[]): string {
-  return segments.map((segment) => segment.text).join("\n");
-}
-
-function buildSrt(segments: TranscriptSegment[]): string {
-  return segments
-    .map((segment, index) => {
-      const start = segment.start_ms ?? 0;
-      const end = segment.end_ms ?? start;
-      return `${index + 1}\n${formatSrtTimestamp(start)} --> ${formatSrtTimestamp(end)}\n${segment.text}\n`;
-    })
-    .join("\n");
-}
-
-function formatSrtTimestamp(milliseconds: number): string {
-  const totalMs = Math.max(0, milliseconds);
-  const hours = Math.floor(totalMs / 3_600_000);
-  const minutes = Math.floor((totalMs % 3_600_000) / 60_000);
-  const seconds = Math.floor((totalMs % 60_000) / 1_000);
-  const ms = totalMs % 1_000;
-  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")},${String(ms).padStart(3, "0")}`;
-}
-
-function buildVtt(segments: TranscriptSegment[]): string {
-  return ["WEBVTT", "", ...segments.map((segment, index) => {
-    const start = segment.start_ms ?? 0;
-    const end = segment.end_ms ?? start;
-    return `${index + 1}\n${formatVttTimestamp(start)} --> ${formatVttTimestamp(end)}\n${segment.text}\n`;
-  })].join("\n");
-}
-
-function formatVttTimestamp(milliseconds: number): string {
-  return formatSrtTimestamp(milliseconds).replace(",", ".");
-}
-
-function buildJson(segments: TranscriptSegment[], transcript: TranscriptRow): string {
-  return JSON.stringify({
-    id: transcript.id,
-    videoId: transcript.video_id,
-    sourceUrl: transcript.source_url,
-    language: transcript.language_name ?? transcript.language_code,
-    provider: transcript.provider,
-    createdAt: transcript.created_at,
-    segments: segments.map((segment) => ({
-      index: segment.sequence_number,
-      startMs: segment.start_ms,
-      endMs: segment.end_ms,
-      text: segment.text,
-    })),
-  }, null, 2);
-}
-
 function escapeForRegex(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
@@ -107,37 +60,43 @@ function highlightMatch(text: string, query: string): ReactNode {
 
 export function TranscriptReader({ transcript, segments }: TranscriptReaderProps) {
   const [query, setQuery] = useState("");
-  const [copied, setCopied] = useState(false);
-  const [status, setStatus] = useState<string | null>(null);
+  const [copiedFormat, setCopiedFormat] = useState<"text" | "timestamps" | null>(null);
+  const [status, setStatus] = useState<{ message: string; kind: "success" | "error" } | null>(null);
   const [activeMatchIndex, setActiveMatchIndex] = useState(0);
   const matchRefs = useRef<Array<HTMLDivElement | null>>([]);
 
-  const transcriptText = transcript.full_text ?? buildPlainText(segments);
+  const transcriptText = formatTranscriptForCopy(transcript.full_text, segments);
 
   const visibleSegments = useMemo(() => getVisibleSegments(segments, query), [query, segments]);
   const matchCount = useMemo(() => countMatches(segments, query), [query, segments]);
+  const timestampsAvailable = hasSegmentStartTimes(segments);
+  const subtitleTimingAvailable = hasValidSubtitleTiming(segments);
 
-  async function copyTranscript() {
+  async function copyTranscript(withTimestamps = false) {
     try {
-      await navigator.clipboard.writeText(transcriptText);
-      setCopied(true);
-      setStatus("Copied to clipboard.");
-      window.setTimeout(() => setCopied(false), 1_500);
+      const content = withTimestamps ? formatTranscriptWithTimestamps(segments) : transcriptText;
+      if (content === null) {
+        setStatus({ message: "Timestamped copy is unavailable because segment timing is missing or invalid.", kind: "error" });
+        return;
+      }
+      await navigator.clipboard.writeText(content);
+      const format = withTimestamps ? "timestamps" : "text";
+      setCopiedFormat(format);
+      setStatus({ message: withTimestamps ? "Copied transcript with timestamps." : "Copied transcript text.", kind: "success" });
+      window.setTimeout(() => setCopiedFormat(null), 1_500);
     } catch {
-      setStatus("Clipboard access failed. Select and copy the transcript text manually.");
+      setStatus({ message: "Clipboard access failed. Select and copy the transcript text manually.", kind: "error" });
     }
   }
 
   function exportTranscript(format: "txt" | "srt" | "vtt" | "json") {
-    const mimeType = format === "json" ? "application/json" : "text/plain;charset=utf-8";
     const filename = `${transcript.video_id || "transcript"}.${format}`;
-    const text = format === "txt"
-      ? transcriptText
-      : format === "srt"
-        ? buildSrt(segments)
-        : format === "vtt"
-          ? buildVtt(segments)
-          : buildJson(segments, transcript);
+    const text = buildTranscriptExport(format, transcript, segments);
+    if (text === null) {
+      setStatus({ message: `${format.toUpperCase()} export is unavailable because segment timing is missing or invalid.`, kind: "error" });
+      return;
+    }
+    const mimeType = format === "json" ? "application/json;charset=utf-8" : "text/plain;charset=utf-8";
 
     const blob = new Blob([text], { type: mimeType });
     const url = URL.createObjectURL(blob);
@@ -146,7 +105,7 @@ export function TranscriptReader({ transcript, segments }: TranscriptReaderProps
     anchor.download = filename;
     anchor.click();
     URL.revokeObjectURL(url);
-    setStatus(`Exported ${format.toUpperCase()} transcript.`);
+    setStatus({ message: `Exported ${format.toUpperCase()} transcript.`, kind: "success" });
   }
 
   function jumpToMatch(index: number) {
@@ -179,18 +138,21 @@ export function TranscriptReader({ transcript, segments }: TranscriptReaderProps
           />
         </div>
         <div className="viewer-actions">
-          <button type="button" className="secondary-action" onClick={copyTranscript}>
-            {copied ? "Copied" : "Copy transcript"}
+          <button type="button" className="secondary-action" onClick={() => copyTranscript()}>
+            {copiedFormat === "text" ? "Copied" : "Copy transcript"}
           </button>
-          <div className="export-menu" aria-label="Export transcript">
-            <button type="button" className="secondary-action">Export</button>
+          <button type="button" className="secondary-action" onClick={() => copyTranscript(true)} disabled={!timestampsAvailable}>
+            {copiedFormat === "timestamps" ? "Copied with timestamps" : "Copy with timestamps"}
+          </button>
+          <details className="export-menu">
+            <summary className="secondary-action" aria-label="Export transcript">Export</summary>
             <div className="export-menu-items">
               <button type="button" onClick={() => exportTranscript("txt")}>TXT</button>
-              <button type="button" onClick={() => exportTranscript("srt")}>SRT</button>
-              <button type="button" onClick={() => exportTranscript("vtt")}>VTT</button>
+              <button type="button" onClick={() => exportTranscript("srt")} disabled={!subtitleTimingAvailable}>SRT</button>
+              <button type="button" onClick={() => exportTranscript("vtt")} disabled={!subtitleTimingAvailable}>VTT</button>
               <button type="button" onClick={() => exportTranscript("json")}>JSON</button>
             </div>
-          </div>
+          </details>
         </div>
       </div>
 
@@ -211,7 +173,7 @@ export function TranscriptReader({ transcript, segments }: TranscriptReaderProps
         </div>
       ) : null}
 
-      {status ? <p className="form-message success" role="status">{status}</p> : null}
+      {status ? <p className={`form-message ${status.kind}`} role={status.kind === "error" ? "alert" : "status"}>{status.message}</p> : null}
 
       <div className="transcript-viewer">
         {visibleSegments.length > 0 ? (

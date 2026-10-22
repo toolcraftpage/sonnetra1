@@ -6,8 +6,16 @@ import { PublicPageShell } from "@/components/public-page-shell";
 export const metadata: Metadata = {
   title: "YouTube transcript",
   description: "Learn how Sonnetra turns a YouTube URL into a readable transcript with timestamps, search, and export tools.",
-  alternates: { canonical: "/youtube-transcript" },
+  alternates: {
+    canonical: "/youtube-transcript",
+    languages: {
+      en: "/youtube-transcript",
+      am: "/youtube-transcript-amharic",
+    },
+  },
   openGraph: {
+    locale: "en_US",
+    alternateLocale: ["am_ET"],
     title: "YouTube transcript with Sonnetra",
     description: "Paste a YouTube URL and turn spoken content into a usable transcript with search and export support.",
     url: "/youtube-transcript",

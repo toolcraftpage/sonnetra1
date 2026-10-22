@@ -33,6 +33,9 @@ test("rejects empty, malformed, out-of-order, negative, and inconsistent respons
     { content: [{ text: "x", offset: 2, duration: 1 }, { text: "y", offset: 1, duration: 1 }], lang: "en" },
     { content: [{ text: "x", offset: 0, duration: 1, lang: "am" }], lang: "en" },
     { content: [{ text: "x", offset: 0, duration: -1 }], lang: "en" },
+    { content: [{ text: "x", offset: "0", duration: 1 }], lang: "en" },
+    { content: [{ text: "x", offset: 0, duration: "1" }], lang: "en" },
+    { content: [{ text: "x", offset: 1e308, duration: 1e308 }], lang: "en" },
   ];
   for (const response of incompleteCases) {
     assert.throws(() => normalizeSupadataResponse(response, request), (error) => error instanceof AppError && error.code === ERROR_CODES.PROVIDER_MALFORMED_RESPONSE);

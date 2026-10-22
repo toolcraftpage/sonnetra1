@@ -1,22 +1,19 @@
 import { NextResponse } from "next/server";
 
-import { getServerConfig } from "@/lib/config/server";
 import { APP_NAME, API_VERSION, REQUEST_ID_HEADER } from "@/lib/constants";
+import { getHealthIntegrationStatus } from "@/lib/env";
 import { getRequestId, withRequestId } from "@/lib/request-id";
 
 export function GET(request: Request) {
   const requestId = getRequestId(request);
-  const config = getServerConfig();
+  const integrations = getHealthIntegrationStatus();
   const response = NextResponse.json({
     success: true,
     data: {
       application: APP_NAME,
       status: "healthy",
       apiVersion: API_VERSION,
-      integrations: {
-        supabase: Boolean(config.supabaseUrl && config.supabaseAnonKey),
-        supadata: Boolean(config.supadataApiKey),
-      },
+      integrations,
     },
     requestId,
   });

@@ -102,6 +102,41 @@ test("homepage does not present fabricated transcript progress", () => {
   assert.doesNotMatch(homepage, /watch\?v=example|Transcript workflow|Source validated and queued for retrieval/);
 });
 
+test("AdSense uses one gated Next Script loader and no hard-coded publisher or slot", () => {
+  const layout = readFileSync(new URL("../src/app/layout.tsx", import.meta.url), "utf8");
+  const homepage = readFileSync(new URL("../src/app/page.tsx", import.meta.url), "utf8");
+  const adComponent = readFileSync(new URL("../src/components/adsense-slot.tsx", import.meta.url), "utf8");
+
+  assert.doesNotMatch(layout, /adsbygoogle|googlesyndication/);
+  assert.equal([...homepage.matchAll(/<AdSenseSlot\s*\/>/gu)].length, 1);
+  assert.match(adComponent, /import Script from "next\/script"/u);
+  assert.match(adComponent, /id="sonnetra-adsense-script"/u);
+  assert.match(adComponent, /pagead2\.googlesyndication\.com\/pagead\/js\/adsbygoogle\.js\?client=/u);
+  assert.match(adComponent, /if \(!enabled \|\| !clientId \|\| !slotId\)/u);
+  assert.match(adComponent, /const validSlot = \/\^\[0-9\]\+\$\/u\.test\(slotId\)/u);
+  assert.doesNotMatch(adComponent, /document\.createElement|ca-pub-7502070254214273|data-ad-slot="[^"]+"/u);
+});
+
+test("guides index and sitemap link only to guide routes that exist", () => {
+  const guideIndex = readFileSync(new URL("../src/app/guides/page.tsx", import.meta.url), "utf8");
+  const sitemap = readFileSync(new URL("../src/app/sitemap.ts", import.meta.url), "utf8");
+  const guideRoutes = [
+    "how-to-get-youtube-transcript",
+    "how-to-copy-youtube-transcript",
+    "how-to-download-youtube-subtitles",
+    "youtube-transcripts-for-study",
+    "youtube-transcripts-for-research",
+    "youtube-transcript-timestamps",
+    "youtube-transcript-amharic",
+  ];
+
+  for (const slug of guideRoutes) {
+    assert.ok(readFileSync(new URL(`../src/app/guides/${slug}/page.tsx`, import.meta.url), "utf8").length > 0);
+    assert.ok(guideIndex.includes(`/guides/${slug}`));
+    assert.ok(sitemap.includes(`/guides/${slug}`));
+  }
+});
+
 test("provider and transcript failures map to stable HTTP statuses", () => {
   assert.equal(new AppError(ERROR_CODES.RATE_LIMITED, "Limited.").statusCode, 429);
   assert.equal(new AppError(ERROR_CODES.PROVIDER_TIMEOUT, "Timed out.").statusCode, 504);

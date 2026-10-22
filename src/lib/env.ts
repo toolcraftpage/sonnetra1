@@ -7,6 +7,11 @@ export type EnvironmentEntry = {
   status: EnvironmentStatus;
 };
 
+export type HealthIntegrationStatus = {
+  configuration: EnvironmentStatus;
+  verification: "NOT_CHECKED";
+};
+
 type EnvironmentRule = {
   name: string;
   visibility: EnvironmentVisibility;
@@ -82,6 +87,32 @@ function isSafeWebUrl(value: string): boolean {
   } catch {
     return false;
   }
+}
+
+export function getHealthIntegrationStatus(
+  environment: Record<string, string | undefined> = process.env,
+): { supabase: HealthIntegrationStatus; supadata: HealthIntegrationStatus } {
+  const entries = validateEnvironment(environment);
+  const supabaseUrlName = environment.SUPABASE_URL?.trim()
+    ? "SUPABASE_URL"
+    : "NEXT_PUBLIC_SUPABASE_URL";
+  const supabaseKey = environment.SUPABASE_ANON_KEY?.trim()
+    || environment.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim();
+  const supabaseServiceRoleKey = environment.SUPABASE_SERVICE_ROLE_KEY?.trim();
+  const supabaseUrl = environment.SUPABASE_URL?.trim()
+    || environment.NEXT_PUBLIC_SUPABASE_URL?.trim();
+  const supabaseUrlStatus = entries.find(({ name }) => name === supabaseUrlName)?.status;
+  const supadataStatus = entries.find(({ name }) => name === "SUPADATA_API_KEY")?.status ?? "MISSING";
+  const supabaseConfiguration: EnvironmentStatus = !supabaseUrl || !supabaseKey || !supabaseServiceRoleKey
+    ? "MISSING"
+    : supabaseUrlStatus === "INVALID"
+      ? "INVALID"
+      : "CONFIGURED";
+
+  return {
+    supabase: { configuration: supabaseConfiguration, verification: "NOT_CHECKED" },
+    supadata: { configuration: supadataStatus, verification: "NOT_CHECKED" },
+  };
 }
 
 export function validateEnvironment(

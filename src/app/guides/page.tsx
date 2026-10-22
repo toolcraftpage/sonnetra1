@@ -15,11 +15,16 @@ export const metadata: Metadata = {
 };
 
 const guides = [
-  { href: "/guides/how-to-get-youtube-transcript", title: "How to get a YouTube transcript" },
-  { href: "/guides/how-to-copy-youtube-transcript", title: "How to copy a YouTube transcript" },
-  { href: "/guides/how-to-download-youtube-subtitles", title: "How to download YouTube subtitles" },
-  { href: "/guides/youtube-transcripts-for-study", title: "YouTube transcripts for study" },
-  { href: "/guides/youtube-transcripts-for-research", title: "YouTube transcripts for research" },
+  { href: "/guides/how-to-get-youtube-transcript", title: "How to get a YouTube transcript", description: "Validate a supported video URL and follow the transcript job through to its result." },
+  { href: "/guides/how-to-copy-youtube-transcript", title: "How to copy a YouTube transcript", description: "Copy source text or timestamped segments when timing data is available." },
+  { href: "/guides/how-to-download-youtube-subtitles", title: "How to download YouTube subtitles", description: "Choose a transcript export format and understand when timed formats are available." },
+  { href: "/guides/youtube-transcripts-for-study", title: "YouTube transcripts for study", description: "Use source transcripts as a companion for review and note-taking." },
+  { href: "/guides/youtube-transcripts-for-research", title: "YouTube transcripts for research", description: "Keep quotations and references tied to their source video." },
+  { href: "/guides/youtube-transcript-timestamps", title: "YouTube transcript timestamps", description: "Understand segment timing and timestamped exports when source timing exists." },
+  { href: "/guides/youtube-transcript-amharic", title: "YouTube transcripts in Amharic", description: "Work with Amharic transcript text when the provider can retrieve it." },
+  { href: "/guides/extract-amharic-transcripts-language-learning", title: "How to Extract Amharic Transcripts for Language Learning", description: "Use available Amharic captions as a careful companion to listening, vocabulary review, and language study." },
+  { href: "/guides/ethics-youtube-transcripts-research", title: "The Ethics of Using YouTube Transcripts for Research", description: "Consider consent, context, citation, copyright, and responsible handling when studying video transcripts." },
+  { href: "/guides/unicode-and-language-codes", title: "How Sonnetra Preserves Unicode and Language Codes", description: "Understand Unicode text, language requests, and the limits of transcript language metadata." },
 ];
 
 export default function GuidesPage() {
@@ -33,7 +38,7 @@ export default function GuidesPage() {
           {guides.map((guide) => (
             <article key={guide.href} className="page-card">
               <h2>{guide.title}</h2>
-              <p>Practical guidance for using the transcript workflow, reading the result, and preserving context while you work.</p>
+              <p>{guide.description}</p>
               <Link href={guide.href} className="secondary-link">Read guide</Link>
             </article>
           ))}

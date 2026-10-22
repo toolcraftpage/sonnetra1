@@ -15,7 +15,10 @@ type TranscriptDetail = {
   title: string | null;
   language_code: string;
   language_name: string;
+  is_auto_generated: boolean;
   provider: string;
+  provider_reference: string | null;
+  source_metadata: Record<string, unknown>;
   full_text: string | null;
   segment_count: number;
   created_at: string;
@@ -88,13 +91,16 @@ export default async function TranscriptDetailPage({ params, searchParams }: { p
       user_id: null,
       video_id: transcript.metadata.videoId,
       source_url: transcript.metadata.canonicalUrl,
-      title: null,
+      title: transcript.metadata.title,
       language_code: transcript.language.code,
       language_name: transcript.language.name,
-      provider: "supadata",
-      full_text: transcript.segments.map((segment) => segment.text).join("\n"),
+      is_auto_generated: transcript.language.isGenerated,
+      provider: transcript.provider,
+      provider_reference: transcript.providerReference,
+      source_metadata: transcript.sourceMetadata,
+      full_text: transcript.fullText,
       segment_count: transcript.segments.length,
-      created_at: new Date().toISOString(),
+      created_at: transcript.createdAt,
     } as unknown as TranscriptDetail;
 
     return (
@@ -127,7 +133,7 @@ export default async function TranscriptDetailPage({ params, searchParams }: { p
 
   const { data: transcriptData, error: transcriptError } = await supabase
     .from("transcripts")
-    .select("id, job_id, user_id, video_id, source_url, title, language_code, language_name, provider, full_text, segment_count, created_at")
+    .select("id, job_id, user_id, video_id, source_url, title, language_code, language_name, is_auto_generated, provider, provider_reference, source_metadata, full_text, segment_count, created_at")
     .eq("id", id)
     .eq("user_id", user.id)
     .maybeSingle();

@@ -34,8 +34,13 @@ export interface TranscriptJobRepository extends ReadRepository<"transcript_jobs
 }
 
 export type PersistedTranscript = {
-  language: { code: string; name: string; isGenerated?: boolean };
-  metadata: { videoId: string; canonicalUrl: string };
+  provider: string;
+  providerReference: string | null;
+  sourceMetadata: Record<string, unknown>;
+  createdAt: string;
+  fullText: string | null;
+  language: { code: string; name: string; isGenerated: boolean };
+  metadata: { videoId: string; canonicalUrl: string; title: string | null };
   segments: readonly { index: number; text: string; startMs?: number; endMs?: number }[];
 };
 

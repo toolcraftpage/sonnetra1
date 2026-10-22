@@ -5,6 +5,7 @@ const navItems = [
   { href: "/youtube-transcript", label: "Transcript" },
   { href: "/how-it-works", label: "How It Works" },
   { href: "/features", label: "Features" },
+  { href: "/pricing", label: "Pricing" },
   { href: "/guides", label: "Guides" },
   { href: "/faq", label: "FAQ" },
   { href: "/about", label: "About" },

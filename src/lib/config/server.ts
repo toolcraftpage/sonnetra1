@@ -11,7 +11,7 @@ export function getSupadataConfiguration(
 ) {
   const key = environment.SUPADATA_API_KEY?.trim();
   return {
-    status: key ? (key.length >= 20 ? "CONFIGURED" : "INVALID") : "MISSING" as ProviderConfigurationStatus,
+    status: (key ? "CONFIGURED" : "MISSING") as ProviderConfigurationStatus,
     apiKey: key,
   } as const;
 }

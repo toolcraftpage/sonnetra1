@@ -5,7 +5,7 @@ import { PublicPageShell } from "@/components/public-page-shell";
 
 export const metadata: Metadata = {
   title: "About",
-  description: "Learn what Sonnetra does and how transcript extraction works in a privacy-conscious workflow.",
+  description: "Learn about Sonnetra's mission to make spoken video content more accessible, including Amharic and other languages.",
   alternates: { canonical: "/about" },
   openGraph: {
     title: "About Sonnetra",
@@ -18,19 +18,19 @@ export default function AboutPage() {
   return (
     <PublicPageShell
       title="About Sonnetra"
-      intro="Sonnetra is a practical transcript extraction workspace for YouTube videos. It helps people turn spoken content into readable, searchable, copyable text without losing source context."
+      intro="Sonnetra aims to make spoken video content easier to access and work with, including Amharic and other global languages when source transcripts are available."
     >
       <section className="page-section">
         <div className="page-grid two-column">
           <article className="page-card">
-            <h2>Built around real transcript extraction</h2>
-            <p>Sonnetra is designed for people who want to work with spoken YouTube content in a more usable form. The product focuses on extracting transcripts, preserving timing context, and making the result easy to search and reuse.</p>
-            <p>It supports timestamped transcripts, copyable reading flows, and browser-side document-style viewing for published transcript results.</p>
+            <h2>Making spoken content easier to reach</h2>
+            <p>Sonnetra exists to make spoken video content more useful to people who learn, research, teach, or communicate through text. A readable transcript can support accessibility, help someone revisit a lesson, or make a long discussion easier to search without replacing the original video.</p>
+            <p>We want language communities to be able to find and work with their digital material. That includes respecting Amharic and other languages as written, not treating them as a secondary or disposable form of content.</p>
           </article>
           <article className="page-card">
-            <h2>Useful for everyday workflows</h2>
-            <p>Students, researchers, educators, journalists, content creators, and language learners can all use Sonnetra to work with spoken content in a more accessible format.</p>
-            <p>The emphasis stays on real extraction, readable output, and clear ownership boundaries for authenticated and anonymous usage.</p>
+            <h2>Faithful to source and availability</h2>
+            <p>Sonnetra requests transcript text from its configured provider and presents the result with available language and timing information. Whether a transcript can be retrieved depends on the video and source captions; the product does not promise captions for every upload or invent missing words.</p>
+            <p>We aim to provide readable output, clear access boundaries, and practical tools that encourage people to verify important passages against the source.</p>
           </article>
         </div>
       </section>
